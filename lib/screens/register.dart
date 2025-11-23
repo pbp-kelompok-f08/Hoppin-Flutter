@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hoppin/screens/login.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/provider.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -127,7 +129,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             "password2": password2,
                           }));
                       if (context.mounted) {
-                        if (response['status'] == 'success') {
+                        if (response['status'] == true) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Successfully registered!'),

@@ -1,8 +1,11 @@
+import 'package:flutter_hoppin/screens/match_page.dart';
 import 'package:flutter_hoppin/screens/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/screens/register.dart';
+import 'package:provider/provider.dart';
+
 
 void main() {
   runApp(const LoginApp());
@@ -114,8 +117,10 @@ class _LoginPageState extends State<LoginPage> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => MyHomePage(title: '',)),
+                              builder: (context) => const MatchPage(),
+                            ),
                           );
+
                           ScaffoldMessenger.of(context)
                             ..hideCurrentSnackBar()
                             ..showSnackBar(
