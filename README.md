@@ -58,6 +58,115 @@ Hoppin ditujukan bagi seluruh individu yang memiliki minat terhadap aktivitas ol
 
 ---
 
+## 🗓️ Perencanaan Per Individu
+<details>
+  <summary>Lihat Rencana Kerja</summary>
+
+### 📅 **Pekan 1 — 17 s.d. 23 November 2025**
+- **M. Naufal Zhafran R.**  
+  ▸ Menginisiasi project Django & Flutter  
+  ▸ Membuat API fitur **login** dan **register**
+
+- **Fitto Fadhelli V.**  
+  ▸ Menyusun deskripsi awal GitHub  
+  ▸ Membuat API **venue sharing** (share data venue)
+
+- **Yahya Muhandar F.**  
+  ▸ Membuat API **fitur sosial media (threads)**  
+  ▸ Menyusun **design system** awal
+
+- **Dion Wisdom P.**  
+  ▸ Menyusun deskripsi GitHub  
+  ▸ Membuat API **live chat** (real-time messaging)
+
+- **Afifah Widhia R.**  
+  ▸ Menyusun deskripsi GitHub  
+  ▸ Menyusun **design system**
+
+---
+
+### 📅 **Pekan 2 — 24 s.d. 30 November 2025**
+- **M. Naufal Zhafran R.**  
+  ▸ Membuat API fitur **match / open party**
+
+- **Fitto Fadhelli V.**  
+  ▸ Integrasi fitur **booking venue** di Django  
+  ▸ Membuat tampilan booking di Flutter
+
+- **Yahya Muhandar F.**  
+  ▸ Integrasi fitur **sosmed**  
+  ▸ Membuat UI sosmed di Flutter
+
+- **Dion Wisdom P.**  
+  ▸ Integrasi fitur **live chat**  
+  ▸ Membuat tampilan chat di Flutter
+
+- **Afifah Widhia R.**  
+  ▸ Integrasi fitur **profil**  
+  ▸ Membuat UI profil di Flutter
+
+---
+
+### 📅 **Pekan 3 — 1 s.d. 7 Desember 2025**
+- **M. Naufal Zhafran R.**  
+  ▸ Integrasi fitur **match**  
+  ▸ Membuat UI match di Flutter
+
+- **Fitto Fadhelli V.**  
+  ▸ Membuat tampilan **card venue**
+
+- **Yahya Muhandar F.**  
+  ▸ Membuat tampilan **card sosial media**
+
+- **Dion Wisdom P.**  
+  ▸ Membuat tampilan **group chat / live chat UI**
+
+- **Afifah Widhia R.**  
+  ▸ Membuat tampilan **profil + dashboard**
+
+---
+
+### 📅 **Pekan 4 — 8 s.d. 14 Desember 2025**
+- **M. Naufal Zhafran R.**  
+  ▸ Menyempurnakan UI & UX fitur **match**
+
+- **Fitto Fadhelli V.**  
+  ▸ Menyempurnakan UI **booking venue**  
+  ▸ Memastikan integrasi data berjalan baik
+
+- **Yahya Muhandar F.**  
+  ▸ Menyempurnakan UI fitur **sosmed**  
+  ▸ Memastikan integrasi gambar dan data
+
+- **Dion Wisdom P.**  
+  ▸ Menyempurnakan UI **live chat**  
+  ▸ Memastikan chat mobile ↔ web terintegrasi
+
+- **Afifah Widhia R.**  
+  ▸ Menyempurnakan UI **profile** + card detail
+
+---
+
+### 📅 **Pekan 5 — 15 s.d. 20 Desember 2025**
+- **M. Naufal Zhafran R.**  
+  ▸ Routing ke halaman utama + fitur **match**
+
+- **Fitto Fadhelli V.**  
+  ▸ Routing ke halaman utama + fitur **booking venue**
+
+- **Yahya Muhandar F.**  
+  ▸ Routing ke halaman utama + fitur **sosmed**
+
+- **Dion Wisdom P.**  
+  ▸ Routing ke halaman utama + fitur **live chat**
+
+- **Afifah Widhia R.**  
+  ▸ Routing ke halaman utama + fitur **profile** dan fitur lainnya  
+
+</details>
+
+---
+
 ## 📊 Sumber Initial Dataset
 <details>
   <summary>Lihat Dataset</summary>
@@ -97,6 +206,8 @@ Penjaga kualitas platform: moderasi konten, kelola data, dan pantau aktivitas.
 - **Manajemen Pengguna:** lihat semua pengguna, nonaktifkan/hapus akun pelanggar.
 - **Hak User lainnya:** Admin juga memiliki hak yang sama yang dimiliki oleh User.
 </details>
+
+---
 
 ## 🔗 Alur Integrasi
 <details>
