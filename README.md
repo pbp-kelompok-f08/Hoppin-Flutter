@@ -82,6 +82,7 @@ Hoppin ditujukan bagi seluruh individu yang memiliki minat terhadap aktivitas ol
 - **Afifah Widhia R.**  
   ▸ Menyusun deskripsi GitHub  
   ▸ Menyusun **design system**
+  ▸ Membuat API **profile**
 
 ---
 
@@ -189,7 +190,7 @@ untuk fitur" seperti match akan dibuatkan data dummy berdasarkan data venue yang
 <details>
 <summary>Role & Hak Akses</summary>
 
-### 1) **User (Pengguna Umum)**
+**User (Pengguna Umum)**
 Pengguna inti aplikasi **Hoppin** untuk berinteraksi dan ikut kegiatan olahraga.
 
 **Hak & Fitur:**
@@ -198,13 +199,6 @@ Pengguna inti aplikasi **Hoppin** untuk berinteraksi dan ikut kegiatan olahraga.
 - **Match (Open/Find Party):** buat *match* terbuka atau gabung *match* yang tersedia.
 - **Live Chat:** kirim pesan real-time untuk koordinasi booking/match.
 - **Profil:** ubah foto/bio/minat olahraga, lihat statistik aktivitas.
-
-### 2) **Admin**
-Penjaga kualitas platform: moderasi konten, kelola data, dan pantau aktivitas.
-
-**Hak & Fitur:**
-- **Manajemen Pengguna:** lihat semua pengguna, nonaktifkan/hapus akun pelanggar.
-- **Hak User lainnya:** Admin juga memiliki hak yang sama yang dimiliki oleh User.
 </details>
 
 ---
