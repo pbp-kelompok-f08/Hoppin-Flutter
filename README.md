@@ -66,6 +66,7 @@ Hoppin ditujukan bagi seluruh individu yang memiliki minat terhadap aktivitas ol
 - **M. Naufal Zhafran R.**  
   ▸ Menginisiasi project Django & Flutter  
   ▸ Membuat API fitur **login** dan **register**
+  ▸ Membuat API fitur **Find Matches**
 
 - **Fitto Fadhelli V.**  
   ▸ Menyusun deskripsi awal GitHub  
