@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/venue_model.dart';
 import '../../screens/login.dart';
+import 'package:flutter_hoppin/colors.dart';
 
 class VenueDetailPage extends StatefulWidget {
   final Venue venue;

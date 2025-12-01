@@ -1,3 +1,4 @@
+import 'package:flutter_hoppin/booking_venue/book_screens/venue_entry_list.dart';
 import 'package:flutter_hoppin/screens/match_page.dart';
 import 'package:flutter_hoppin/screens/menu.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/screens/register.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_hoppin/colors.dart';
 
 
 void main() {
@@ -47,11 +49,13 @@ class _LoginPageState extends State<LoginPage> {
         appBar: AppBar(
             title: const Text('Login'),
         ),
+        backgroundColor: MainColors.primaryColor,
         body: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Card(
                 elevation: 8,
+                color: MainColors.secondaryCardColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
                 ),
@@ -70,11 +74,28 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 30.0),
                   TextField(
                     controller: _usernameController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Username',
+                      labelStyle: TextStyle(color: MainColors.placeholderColor),
                       hintText: 'Enter your username',
+                      hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(color: MainColors.placeholderColor)
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border abu
+                        ),
+                      ),
+
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border saat fokus
+                          width: 2,
+                        ),
                       ),
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -83,11 +104,28 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 12.0),
                   TextField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Password',
+                      labelStyle: TextStyle(color: MainColors.placeholderColor),
                       hintText: 'Enter your password',
+                      hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(color: MainColors.placeholderColor)
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border abu
+                        ),
+                      ),
+
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border saat fokus
+                          width: 2,
+                        ),
                       ),
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -117,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const MatchPage(),
+                              builder: (context) => const VenueEntryListPage(),
                             ),
                           );
 
@@ -152,7 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
                       minimumSize: Size(double.infinity, 50),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: MainColors.secondaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                     ),
                     child: const Text('Login'),

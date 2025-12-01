@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_hoppin/colors.dart';
 import 'package:flutter_hoppin/screens/login.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
     return Scaffold(
+      backgroundColor: MainColors.primaryColor,
       appBar: AppBar(
         title: const Text('Register'),
         leading: IconButton(
@@ -56,9 +58,25 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _usernameController,
                     decoration: const InputDecoration(
                       labelText: 'Username',
+                      labelStyle: TextStyle(color: MainColors.placeholderColor),
                       hintText: 'Enter your username',
+                      hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border abu
+                        ),
+                      ),
+
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border saat fokus
+                          width: 2,
+                        ),
                       ),
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -75,9 +93,25 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _passwordController,
                     decoration: const InputDecoration(
                       labelText: 'Password',
+                      labelStyle: TextStyle(color: MainColors.placeholderColor),
                       hintText: 'Enter your password',
+                      hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border abu
+                        ),
+                      ),
+
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border saat fokus
+                          width: 2,
+                        ),
                       ),
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -95,9 +129,25 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _confirmPasswordController,
                     decoration: const InputDecoration(
                       labelText: 'Confirm Password',
+                      labelStyle: TextStyle(color: MainColors.placeholderColor),
                       hintText: 'Confirm your password',
+                      hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border abu
+                        ),
+                      ),
+
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(
+                          color: MainColors.placeholderColor, // ← warna border saat fokus
+                          width: 2,
+                        ),
                       ),
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -152,11 +202,29 @@ class _RegisterPageState extends State<RegisterPage> {
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
                       minimumSize: Size(double.infinity, 50),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: MainColors.secondaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                     ),
                     child: const Text('Register'),
                   ),
+                  const SizedBox(height: 36.0),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Already have an account? Login',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 16.0,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
