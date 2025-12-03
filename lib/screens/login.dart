@@ -1,5 +1,3 @@
-import 'package:flutter_hoppin/booking_venue/book_screens/venue_entry_list.dart';
-import 'package:flutter_hoppin/screens/match_page.dart';
 import 'package:flutter_hoppin/screens/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -7,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/screens/register.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/colors.dart';
+import 'package:flutter_hoppin/screens/menu.dart';
 
 
 void main() {
@@ -155,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const VenueEntryListPage(),
+                              builder: (context) => const MyHomePage(title: "Threads"),
                             ),
                           );
 
