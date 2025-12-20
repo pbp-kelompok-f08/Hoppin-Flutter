@@ -14,11 +14,13 @@ class groupEntrySection extends StatelessWidget {
   });
 
   String _formatTime(DateTime time) {
-    return DateFormat.Hm().format(time); // 13:45
+    return DateFormat.Hm().format(time);
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasChat = group.lastChat != null;
+
     return Material(
       color: MainColors.primaryColor,
       child: InkWell(
@@ -27,7 +29,6 @@ class groupEntrySection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              // ===== AVATAR (PLACEHOLDER) =====
               CircleAvatar(
                 radius: 24,
                 backgroundColor: MainColors.secondaryColor,
@@ -42,7 +43,6 @@ class groupEntrySection extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // ===== GROUP INFO =====
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +63,9 @@ class groupEntrySection extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _formatTime(group.lastChat.createdAt),
+                          hasChat
+                              ? _formatTime(group.lastChat!.createdAt)
+                              : "",
                           style: TextStyle(
                             color: MainColors.secondaryCardColor,
                             fontSize: 12,
@@ -76,12 +78,16 @@ class groupEntrySection extends StatelessWidget {
 
                     // ===== LAST CHAT =====
                     Text(
-                      group.lastChat.toString(), // username: message
+                      hasChat
+                          ? group.lastChat!.toString()
+                          : "Belum ada chat",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: MainColors.secondaryCardColor,
                         fontSize: 14,
+                        fontStyle:
+                            hasChat ? FontStyle.normal : FontStyle.italic,
                       ),
                     ),
                   ],
