@@ -1,9 +1,7 @@
-import 'package:flutter_hoppin/screens/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/screens/register.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/colors.dart';
 import 'package:flutter_hoppin/screens/menu.dart';
 
@@ -80,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
                       hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                        borderSide: BorderSide(color: MainColors.placeholderColor)
+                        borderSide: BorderSide(color: MainColors.placeholderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
@@ -110,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                       hintStyle: TextStyle(color: MainColors.placeholderColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                        borderSide: BorderSide(color: MainColors.placeholderColor)
+                        borderSide: BorderSide(color: MainColors.placeholderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
