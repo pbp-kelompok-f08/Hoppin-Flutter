@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return Provider<CookieRequest>(
       create: (_) => CookieRequest(),
       child: MaterialApp(
-        title: 'Hoppin Sports',
+        title: 'Hoppin',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
               .copyWith(secondary: Colors.blueAccent[400]),
