@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hoppin/colors.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -10,8 +11,9 @@ import '../widgets/chatItem.dart';
 
 class ChatListPage extends StatefulWidget {
   final String groupId;
+  final String groupName;
 
-  const ChatListPage({super.key, required this.groupId});
+  const ChatListPage({super.key, required this.groupId, required this.groupName});
 
   @override
   State<ChatListPage> createState() => _ChatListPageState();
@@ -27,6 +29,70 @@ class _ChatListPageState extends State<ChatListPage> {
   Timer? _pollingTimer;
   bool _isSending = false;
   bool _isInitialLoading = true;
+
+  Future<void> editChat(String chatId, String newMessage) async {
+    final request = context.read<CookieRequest>();
+
+    try {
+      final response = await request.post(
+        'http://localhost:8000/liveChat/chat/update/$chatId/',
+        jsonEncode({
+          "_method": "PATCH",
+          "message": newMessage,
+        }),
+      );
+
+      final updatedChat = Chat.fromJson(response["data"]);
+
+      setState(() {
+        final index = _chats.indexWhere((c) => c.id == chatId);
+        if (index != -1) {
+          _chats[index] = updatedChat;
+        }
+      });
+    } catch (e) {
+      debugPrint('Edit chat failed: $e');
+    }
+  }
+
+  Future<void> deleteChat(String chatId) async {
+    final request = context.read<CookieRequest>();
+
+    try {
+      await request.post(
+        'http://localhost:8000/liveChat/chat/delete/$chatId/',
+        jsonEncode({
+          "_method": "DELETE",
+        }),
+      );
+
+      setState(() {
+        _chats.removeWhere((c) => c.id == chatId);
+        _chatIds.remove(chatId);
+      });
+    } catch (e) {
+      debugPrint('Delete chat failed: $e');
+    }
+  }
+
+
+  Future<void> refreshChat() async {
+    final request = context.read<CookieRequest>();
+
+    final chats = await fetchChat(request);
+
+    setState(() {
+      _chats
+        ..clear()
+        ..addAll(chats);
+
+      _chatIds
+        ..clear()
+        ..addAll(chats.map((c) => c.id));
+    });
+
+    _scrollToBottom();
+}
 
   // ================= FETCH =================
   Future<List<Chat>> fetchChat(CookieRequest request) async {
@@ -146,7 +212,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Group'),
+        title: Text(widget.groupName),
       ),
 
       // ===== CHAT LIST =====
@@ -164,7 +230,18 @@ class _ChatListPageState extends State<ChatListPage> {
                   padding: const EdgeInsets.all(12),
                   itemCount: _chats.length,
                   itemBuilder: (context, index) {
-                    return ChatItem(chat: _chats[index]);
+                    Chat chat = _chats[index];
+                    return ChatItem(
+                      chat: chat,
+                      onEdit: (newMessage) async {
+                        await editChat(chat.id, newMessage);
+                        refreshChat();
+                      },
+                      onDelete: () async {
+                        await deleteChat(chat.id);
+                        refreshChat();
+                      },
+                    );
                   },
                 ),
 
@@ -173,7 +250,7 @@ class _ChatListPageState extends State<ChatListPage> {
         child: Container(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: MainColors.secondaryColor,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -211,7 +288,7 @@ class _ChatListPageState extends State<ChatListPage> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.send),
+                    : const Icon(Icons.send, color: Colors.white),
                 onPressed:
                     _isSending ? null : () => sendMessage(request),
               ),
@@ -219,6 +296,8 @@ class _ChatListPageState extends State<ChatListPage> {
           ),
         ),
       ),
+
+      backgroundColor: MainColors.primaryColor,
     );
   }
 

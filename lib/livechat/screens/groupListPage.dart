@@ -93,11 +93,13 @@ class _GroupListPageState extends State<GroupListPage> {
               return groupEntrySection(
                 group: groups[index],
                 onTap: () {
+                  final group = groups[index];
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ChatListPage(
-                        groupId: groups[index].id,
+                        groupId: group.id,
+                        groupName: group.name,
                       ),
                     ),
                   );
