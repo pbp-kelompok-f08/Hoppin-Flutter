@@ -4,7 +4,6 @@ import 'package:flutter_hoppin/colors.dart';
 import 'package:flutter_hoppin/screens/login.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:provider/provider.dart';
 
 
 class RegisterPage extends StatefulWidget {
