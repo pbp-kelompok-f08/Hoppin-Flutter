@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_hoppin/colors.dart';
 import 'package:flutter_hoppin/livechat/models/group_model.dart';
@@ -17,17 +18,66 @@ class _GroupListPageState extends State<GroupListPage> {
   late Future<List<Group>> _groupsFuture;
 
   Future<List<Group>> fetchGroups(CookieRequest request) async {
-    final response =
-        await request.get('http://localhost:8000/liveChat/group/');
+    try {
+      final response =
+          await request.get('http://127.0.0.1:8000/liveChat/group/');
 
-    final datas = response["data"] as List;
-    return datas.map((e) => Group.fromJson(e)).toList();
+      // Handle null response
+      if (response == null) {
+        return [];
+      }
+
+      // Check if response is a String (HTML/error) instead of Map (JSON)
+      if (response is String) {
+        if (response.trim().startsWith('<!') || response.trim().startsWith('<!DOCTYPE')) {
+          throw Exception('Server returned HTML error page instead of JSON.\n\nPlease check:\n1. Is the Django server running?\n2. Does the endpoint /liveChat/group/ exist?\n\nError response preview: ${response.substring(0, response.length > 300 ? 300 : response.length)}');
+        }
+        // If it's a string but not HTML, try to decode it
+        final decoded = json.decode(response) as Map<String, dynamic>;
+        final datas = decoded["data"] as List?;
+        if (datas == null) return [];
+        return datas.map((e) => Group.fromJson(e as Map<String, dynamic>)).toList();
+      }
+
+      // Response should be a Map<String, dynamic>
+      if (response is! Map<String, dynamic>) {
+        return [];
+      }
+      
+      final datas = response["data"] as List?;
+      if (datas == null) return [];
+      
+      return datas.map((e) {
+        try {
+          return Group.fromJson(e as Map<String, dynamic>);
+        } catch (e) {
+          // Skip invalid entries
+          return null;
+        }
+      }).whereType<Group>().toList();
+    } catch (e) {
+      if (e.toString().contains('<!Doctype') || 
+          e.toString().contains('<!DOCTYPE') ||
+          e.toString().contains('Unexpected token')) {
+        throw Exception('JSON parsing error - Server returned HTML instead of JSON.\n\nPlease check:\n1. Is the Django server running?\n2. Does the endpoint /liveChat/group/ exist?\n3. Verify the endpoint returns JSON, not HTML\n\nOriginal error: $e');
+      }
+      // Return empty list on error instead of crashing
+      return [];
+    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final request = context.watch<CookieRequest>();
+    
+    // Check if user is logged in
+    if (!request.loggedIn) {
+      // User not logged in, set empty future to avoid errors
+      _groupsFuture = Future.value(<Group>[]);
+      return;
+    }
+    
     _groupsFuture = fetchGroups(request);
   }
 

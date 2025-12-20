@@ -9,22 +9,26 @@ class Group {
     String match;
     String name;
     List<String> members;
-    LastChat lastChat;
+    LastChat? lastChat;
 
     Group({
         required this.id,
         required this.match,
         required this.name,
         required this.members,
-        required this.lastChat,
+        this.lastChat,
     });
 
     factory Group.fromJson(Map<String, dynamic> json) => Group(
-        id: json["id"],
-        match: json["match"],
-        name: json["name"],
-        members: List<String>.from(json["members"].map((x) => x)),
-        lastChat: LastChat.fromJson(json["last_chat"]),
+        id: json["id"]?.toString() ?? '',
+        match: json["match"]?.toString() ?? '',
+        name: json["name"]?.toString() ?? '',
+        members: json["members"] != null 
+            ? List<String>.from(json["members"].map((x) => x.toString()))
+            : [],
+        lastChat: json["last_chat"] != null 
+            ? LastChat.fromJson(json["last_chat"] as Map<String, dynamic>)
+            : null,
     );
 
     Map<String, dynamic> toJson() => {
@@ -32,7 +36,7 @@ class Group {
         "match": match,
         "name": name,
         "members": List<dynamic>.from(members.map((x) => x)),
-        "last_chat": lastChat.toJson(),
+        "last_chat": lastChat?.toJson(),
     };
 }
 
@@ -47,11 +51,27 @@ class LastChat {
         required this.createdAt,
     });
 
-    factory LastChat.fromJson(Map<String, dynamic> json) => LastChat(
-        username: json["username"],
-        message: json["message"],
-        createdAt: DateTime.parse(json["createdAt"]),
-    );
+    factory LastChat.fromJson(Map<String, dynamic> json) {
+      // Handle username as string or integer (Django might return user PK)
+      String usernameStr = json["username"]?.toString() ?? 'Unknown';
+      
+      // Handle createdAt - might be string or DateTime
+      DateTime createdAtDate;
+      if (json["createdAt"] is String) {
+        createdAtDate = DateTime.parse(json["createdAt"]);
+      } else if (json["createdAt"] is DateTime) {
+        createdAtDate = json["createdAt"] as DateTime;
+      } else {
+        // Fallback to now if parsing fails
+        createdAtDate = DateTime.now();
+      }
+      
+      return LastChat(
+        username: usernameStr,
+        message: json["message"]?.toString() ?? '',
+        createdAt: createdAtDate,
+      );
+    }
 
     Map<String, dynamic> toJson() => {
         "username": username,
