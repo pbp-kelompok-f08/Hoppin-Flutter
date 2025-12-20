@@ -62,13 +62,14 @@ class groupEntrySection extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Text(
-                          _formatTime(group.lastChat.createdAt),
-                          style: TextStyle(
-                            color: MainColors.secondaryCardColor,
-                            fontSize: 12,
+                        if (group.lastChat != null)
+                          Text(
+                            _formatTime(group.lastChat!.createdAt),
+                            style: TextStyle(
+                              color: MainColors.secondaryCardColor,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
                       ],
                     ),
 
@@ -76,12 +77,17 @@ class groupEntrySection extends StatelessWidget {
 
                     // ===== LAST CHAT =====
                     Text(
-                      group.lastChat.toString(), // username: message
+                      group.lastChat != null 
+                          ? group.lastChat!.toString() 
+                          : 'No messages yet',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: MainColors.secondaryCardColor,
                         fontSize: 14,
+                        fontStyle: group.lastChat == null 
+                            ? FontStyle.italic 
+                            : FontStyle.normal,
                       ),
                     ),
                   ],

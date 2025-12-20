@@ -27,7 +27,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 1;
 
-  final pages = const [Placeholder(), VenueEntryListPage(), MatchPage(), Placeholder(), ProfilePage()];
+  final pages = const [Placeholder(), VenueEntryListPage(), MatchPage(), GroupListPage(), ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
