@@ -27,6 +27,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _loadData() {
     final request = context.read<CookieRequest>();
+
+    // Check if user is logged in
+    if (!request.loggedIn) {
+      // User not logged in, navigate to login
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
+      });
+      return;
+    }
+    
     setState(() {
       _profileFuture = ProfileService.getOwnProfile(request);
       _threadsFuture = _profileFuture.then((profile) => 
