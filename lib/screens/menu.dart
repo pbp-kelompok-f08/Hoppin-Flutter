@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hoppin/booking_venue/book_screens/venue_entry_list.dart';
 import 'package:flutter_hoppin/colors.dart';
+import 'package:flutter_hoppin/livechat/screens/groupListPage.dart';
 import 'package:flutter_hoppin/matches/services/match_service.dart';
 import 'package:flutter_hoppin/screens/match_page.dart';
 
@@ -25,7 +26,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 1;
 
-  final pages = const [Placeholder(), VenueEntryListPage(), MatchPage(), Placeholder(), Placeholder()];
+  final pages = const [Placeholder(), VenueEntryListPage(), MatchPage(), GroupListPage(), Placeholder()];
 
   @override
   Widget build(BuildContext context) {
