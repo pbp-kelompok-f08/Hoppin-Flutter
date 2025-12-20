@@ -1,5 +1,8 @@
 # 📌 Proyek Django F08
 
+## Deployment
+---
+
 ## 👥 Anggota Kelompok
 <details>
   <summary>Daftar Anggota</summary>
