@@ -1,6 +1,9 @@
 # 📌 Proyek Django F08
 
 ## Deployment
+
+[![Build Status](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09/status.svg?token=H5DLOWvcwAn4XbS18MB4Ng&branch=main)](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09)
+
 ---
 
 ## 👥 Anggota Kelompok
