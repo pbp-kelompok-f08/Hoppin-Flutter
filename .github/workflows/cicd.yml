@@ -5,7 +5,7 @@ name: cicd
 on:
   # Triggers the workflow on push events but only for the main branch
   push:
-    branches: [booking_venue]
+    branches: [main]
 
 # Permissions needed for creating releases
 permissions:
