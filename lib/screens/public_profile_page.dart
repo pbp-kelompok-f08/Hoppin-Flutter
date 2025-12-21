@@ -99,7 +99,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       child: Row(
         children: [
           CircleAvatar(
-            radius: 50,
+            radius: 48,
             backgroundImage: profile.profilePicture != null
                 ? NetworkImage(profile.profilePicture!)
                 : null,  

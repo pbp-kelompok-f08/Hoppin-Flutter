@@ -30,7 +30,7 @@ class ThreadCard extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 50,
+                  radius: 38,
                   backgroundImage: thread.user.profilePicture != null
                       ? NetworkImage(thread.user.profilePicture!)
                       : null, 
