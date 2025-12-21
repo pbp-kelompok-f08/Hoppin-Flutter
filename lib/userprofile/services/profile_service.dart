@@ -1,10 +1,12 @@
 import 'dart:convert'; 
+import 'dart:html' as html;
+import 'dart:async';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:flutter_hoppin/userprofile/models/user_profile.dart';
 import 'package:flutter_hoppin/userprofile/models/thread_model.dart';
 
 class ProfileService {
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'http://localhost:8000';
 
   // Get own profile
   static Future<UserProfile> getOwnProfile(CookieRequest request) async {
@@ -132,4 +134,47 @@ class ProfileService {
       return [];
     }
   }
+
+  static Future<Map<String, dynamic>> uploadProfilePicture(
+    CookieRequest request,
+    html.File file,
+  ) {
+    final completer = Completer<Map<String, dynamic>>();
+
+    final formData = html.FormData();
+    formData.appendBlob('profile_picture', file, file.name);
+
+    final xhr = html.HttpRequest();
+    xhr.open('POST', '$baseUrl/accounts/profile/upload-picture/');
+    xhr.withCredentials = true;
+
+    xhr.onLoad.listen((event) {
+      try {
+        final response = jsonDecode(xhr.responseText!);
+        completer.complete(response);
+      } catch (e) {
+        completer.completeError('Invalid JSON response');
+      }
+    });
+
+    xhr.onError.listen((event) {
+      completer.completeError('Upload failed');
+    });
+
+    xhr.send(formData);
+
+    return completer.future;
+  }
+
+  static Future<Map<String, dynamic>> removeProfilePicture(
+    CookieRequest request,
+  ) async {
+    final response = await request.post(
+      'http://localhost:8000/accounts/profile/remove-picture/',
+      {},
+    );
+
+    return response;
+  }
+
 }

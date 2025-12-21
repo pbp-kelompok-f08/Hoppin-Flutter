@@ -52,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final request = context.read<CookieRequest>();
 
     try {
-      await request.logout("http://127.0.0.1:8000/auth/logout/");
+      await request.logout("http://localhost:8000/auth/logout/");
     } catch (_) {}
 
     if (!mounted) return;
@@ -150,11 +150,11 @@ class _ProfilePageState extends State<ProfilePage> {
           // Profile Picture
           CircleAvatar(
             radius: 48,
-            backgroundImage: profile.profilePicture != null
-                ? NetworkImage(profile.profilePicture!)
+            backgroundImage: profile.profilePictureUrl != null
+                ? NetworkImage('${profile.profilePictureUrl}?v=${DateTime.now().millisecondsSinceEpoch}',)
                 : null,
             backgroundColor: Colors.grey[800],
-            child: profile.profilePicture == null
+            child: profile.profilePictureUrl == null
                 ? const Icon(Icons.person, size: 50, color: Colors.white) 
                 : null,
           ),
