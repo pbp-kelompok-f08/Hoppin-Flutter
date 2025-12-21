@@ -150,11 +150,11 @@ class _ProfilePageState extends State<ProfilePage> {
           // Profile Picture
           CircleAvatar(
             radius: 48,
-            backgroundImage: profile.profilePictureUrl != null
-                ? NetworkImage('${profile.profilePictureUrl}?v=${DateTime.now().millisecondsSinceEpoch}',)
+            backgroundImage: profile.profilePicture != null
+                ? NetworkImage(profile.profilePicture!)
                 : null,
             backgroundColor: Colors.grey[800],
-            child: profile.profilePictureUrl == null
+            child: profile.profilePicture == null
                 ? const Icon(Icons.person, size: 50, color: Colors.white) 
                 : null,
           ),
