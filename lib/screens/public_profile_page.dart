@@ -36,6 +36,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E1E1E),
+        foregroundColor: Colors.white,
         title: Text('@${widget.username}'),
         elevation: 0,
       ),
@@ -100,13 +101,12 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         children: [
           CircleAvatar(
             radius: 48,
-            backgroundImage: profile.profilePicture != null
-                ? NetworkImage(profile.profilePicture!)
-                : null,  
             backgroundColor: Colors.grey[800],
-            child: profile.profilePicture == null
-                ? const Icon(Icons.person, size: 50, color: Colors.white)  
-                : null,
+            child: const Icon(
+              Icons.person,
+              size: 50,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -242,8 +242,13 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                 );
               }
 
-              return Column(
-                children: threads.map((thread) => ThreadCard(thread: thread)).toList(),
+             return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: threads.length,
+                itemBuilder: (context, index) {
+                  return ThreadCard(thread: threads[index]);
+                },
               );
             },
           ),

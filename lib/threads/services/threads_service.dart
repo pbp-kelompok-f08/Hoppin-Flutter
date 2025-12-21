@@ -4,7 +4,7 @@ import '../models/threads_models.dart' as tm;
 import '../models/reply_models.dart' as rm;
 
 class ThreadsService {
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'https://m-naufal41-hoppin.pbp.cs.ui.ac.id';
   final CookieRequest request;
 
   ThreadsService(this.request);

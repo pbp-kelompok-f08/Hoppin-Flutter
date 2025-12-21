@@ -52,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final request = context.read<CookieRequest>();
 
     try {
-      await request.logout("http://127.0.0.1:8000/auth/logout/");
+      await request.logout("https://m-naufal41-hoppin.pbp.cs.ui.ac.id/auth/logout/");
     } catch (_) {}
 
     if (!mounted) return;
@@ -150,13 +150,12 @@ class _ProfilePageState extends State<ProfilePage> {
           // Profile Picture
           CircleAvatar(
             radius: 48,
-            backgroundImage: profile.profilePicture != null
-                ? NetworkImage(profile.profilePicture!)
-                : null,
             backgroundColor: Colors.grey[800],
-            child: profile.profilePicture == null
-                ? const Icon(Icons.person, size: 50, color: Colors.white) 
-                : null,
+            child: const Icon(
+              Icons.person,
+              size: 50,
+              color: Colors.white,
+            ),
           ),
 
           // User Info
@@ -358,8 +357,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               }
 
-              return Column(
-                children: threads.map((thread) => ThreadCard(thread: thread)).toList(),
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: threads.length,
+                itemBuilder: (context, index) {
+                  return ThreadCard(thread: threads[index]);
+                },
               );
             },
           ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_hoppin/threads/services/threads_service.dart';
+import 'package:flutter_hoppin/screens/public_profile_page.dart';
 
 import '../widget/modal.dart';
 import '../models/threads_models.dart' as tm;
@@ -872,17 +873,29 @@ class _ThreadCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // avatar
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Tw.card2,
-            backgroundImage: item.user.profilePicture.isNotEmpty
-                ? NetworkImage(item.user.profilePicture)
-                : null,
-            child: item.user.profilePicture.isEmpty
-                ? const Icon(Icons.person, color: Tw.muted)
-                : null,
+          InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicProfilePage(
+                    username: item.user.username,
+                  ),
+                ),
+              );
+            },
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Tw.card2,
+              backgroundImage: item.user.profilePicture.isNotEmpty
+                  ? NetworkImage(item.user.profilePicture)
+                  : null,
+              child: item.user.profilePicture.isEmpty
+                  ? const Icon(Icons.person, color: Tw.muted)
+                  : null,
+            ),
           ),
-          const SizedBox(width: Tw.s4),
 
           // content
           Expanded(
@@ -893,13 +906,25 @@ class _ThreadCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        "@${item.user.username}",
-                        style: const TextStyle(
-                          color: Tw.text,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PublicProfilePage(
+                                      username: item.user.username,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "@${item.user.username}",
+                                style: const TextStyle(
+                                  color: Tw.text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
                     ),
                     Text(
                       created,
@@ -1258,15 +1283,28 @@ class _ReplyCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Tw.card2,
-            backgroundImage: item.user.profilePicture.isNotEmpty
-                ? NetworkImage(item.user.profilePicture)
-                : null,
-            child: item.user.profilePicture.isEmpty
-                ? const Icon(Icons.person, color: Tw.muted, size: 18)
-                : null,
+          InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicProfilePage(
+                    username: item.user.username,
+                  ),
+                ),
+              );
+            },
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Tw.card2,
+              backgroundImage: item.user.profilePicture.isNotEmpty
+                  ? NetworkImage(item.user.profilePicture)
+                  : null,
+              child: item.user.profilePicture.isEmpty
+                  ? const Icon(Icons.person, color: Tw.muted)
+                  : null,
+            ),
           ),
           const SizedBox(width: Tw.s3),
           Expanded(
