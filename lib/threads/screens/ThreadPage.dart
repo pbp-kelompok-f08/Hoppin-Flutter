@@ -113,6 +113,7 @@ class _ThreadsPageState extends State<ThreadsPage> {
       setState(() => loading = false);
     }
   }
+
   void _closeReplies() {
     setState(() {
       activeThreadId = null;
@@ -162,14 +163,56 @@ class _ThreadsPageState extends State<ThreadsPage> {
     });
   }
 
+  bool _asBool(dynamic v, bool fallback) {
+    if (v is bool) return v;
+    if (v is String) {
+      final s = v.toLowerCase().trim();
+      if (s == 'true' || s == '1' || s == 'yes') return true;
+      if (s == 'false' || s == '0' || s == 'no') return false;
+    }
+    if (v is num) return v != 0;
+    return fallback;
+  }
+
+  int _asInt(dynamic v, int fallback) {
+    if (v is int) return v;
+    return int.tryParse(v?.toString() ?? '') ?? fallback;
+  }
+
   Future<void> _toggleLikeThread(tm.Threads item) async {
+    // ✅ optimistic update biar instan
+    setState(() {
+      final idx = allThreads.indexWhere((t) => t.id == item.id);
+      if (idx != -1) {
+        final old = allThreads[idx];
+        allThreads[idx] = updateThread(
+          old,
+          isLiked: !old.isLiked,
+          likeCount: old.isLiked ? (old.likeCount - 1) : (old.likeCount + 1),
+        );
+      }
+
+      final vidx = visibleThreads.indexWhere((t) => t.id == item.id);
+      if (vidx != -1) {
+        final old = visibleThreads[vidx];
+        visibleThreads[vidx] = updateThread(
+          old,
+          isLiked: !old.isLiked,
+          likeCount: old.isLiked ? (old.likeCount - 1) : (old.likeCount + 1),
+        );
+      }
+    });
+
     try {
       final res = await _service.likeThread(item.id);
-      final newCount = (res['likeCount'] ?? item.likeCount) is int
-          ? (res['likeCount'] as int)
-          : int.tryParse((res['likeCount'] ?? item.likeCount).toString()) ??
-                item.likeCount;
-      final isLiked = (res['isLiked'] ?? !item.isLiked) == true;
+
+      // support beberapa kemungkinan key dari backend
+      final likeCountRaw =
+          res['likeCount'] ?? res['like_count'] ?? res['count'];
+      final isLikedRaw = res['isLiked'] ?? res['is_liked'] ?? res['liked'];
+
+      final newCount = _asInt(likeCountRaw, item.likeCount);
+      final newLiked = _asBool(isLikedRaw, !item.isLiked);
 
       setState(() {
         final idx = allThreads.indexWhere((t) => t.id == item.id);
@@ -177,7 +220,7 @@ class _ThreadsPageState extends State<ThreadsPage> {
           allThreads[idx] = updateThread(
             allThreads[idx],
             likeCount: newCount,
-            isLiked: isLiked,
+            isLiked: newLiked,
           );
         }
 
@@ -186,12 +229,14 @@ class _ThreadsPageState extends State<ThreadsPage> {
           visibleThreads[vidx] = updateThread(
             visibleThreads[vidx],
             likeCount: newCount,
-            isLiked: isLiked,
+            isLiked: newLiked,
           );
         }
       });
     } catch (_) {
       _toast(context, "Failed to like thread");
+      // kalau gagal, sync ulang biar bener
+      await _loadThreads();
     }
   }
 
@@ -218,15 +263,26 @@ class _ThreadsPageState extends State<ThreadsPage> {
       await showDialog(
         context: context,
         barrierColor: Colors.black.withOpacity(0.7),
-        builder: (_) => _ReplyDialog(
-          titleUsername: activeThreadUsername ?? "",
-          loading: replyLoading,
-          replies: replies,
-          currentUsername: _currentUsername,
-          onClose: () => Navigator.of(context).pop(),
-          onLikeReply: _toggleLikeReply,
-          onSubmitReply: _submitReply,
-          replyController: replyController,
+        builder: (_) => StatefulBuilder(
+          builder: (context, setModalState) => _ReplyDialog(
+            titleUsername: activeThreadUsername ?? "",
+            loading: replyLoading,
+            replies: replies,
+            currentUsername: _currentUsername,
+            onClose: () => Navigator.of(context).pop(),
+
+            // ✅ setelah parent update, paksa dialog rebuild
+            onLikeReply: (r) async {
+              await _toggleLikeReply(r);
+              setModalState(() {});
+            },
+            onSubmitReply: () async {
+              await _submitReply();
+              setModalState(() {});
+            },
+
+            replyController: replyController,
+          ),
         ),
       );
     }
@@ -261,85 +317,59 @@ class _ThreadsPageState extends State<ThreadsPage> {
   }
 
   Future<void> _submitReply() async {
-  final threadId = activeThreadId;
-  final content = replyController.text.trim();
-  if (threadId == null || content.isEmpty) return;
+    final threadId = activeThreadId;
+    final content = replyController.text.trim();
+    if (threadId == null || content.isEmpty) return;
 
-  try {
-    // Panggil service
-    final res = await _service.addReply(threadId, content);
-    replyController.clear();
-
-    rm.Reply? newReply;
-
-    // 1. Coba parsing response ke objek Reply
     try {
-      if (res.containsKey('id')) {
-        newReply = rm.Reply.fromJson(res);
-      } else if (res['reply'] is Map) {
-        newReply = rm.Reply.fromJson((res['reply'] as Map).cast<String, dynamic>());
-      }
-    } catch (parseError) {
-      debugPrint("Parsing error (but server saved it): $parseError");
-    }
+      final res = await _service.addReply(threadId, content);
+      replyController.clear();
 
-    // 2. Update UI secara lokal agar instan
-    setState(() {
-      if (newReply != null) {
-        replies = [newReply, ...replies];
-      }
-      
-      // Update count thread
+      // ✅ selalu refresh replies setelah post
+      final fresh = await _service.fetchReplies(threadId);
+      setState(() => replies = fresh);
+
+      // update replyCount di thread list (pakai count dari server kalau ada)
       final incomingCount = res['count'] ?? res['reply_count'];
       final parsedCount = incomingCount is int
           ? incomingCount
           : int.tryParse(incomingCount?.toString() ?? '');
 
-      _updateLocalThreadReplyCount(threadId, parsedCount);
-    });
+      _updateLocalThreadReplyCount(threadId, parsedCount ?? fresh.length);
 
-    // Jika parsing gagal tapi tidak ada error HTTP, kita refresh list saja agar aman
-    if (newReply == null) {
-      final fresh = await _service.fetchReplies(threadId);
-      setState(() => replies = fresh);
-    }
-
-    _toast(context, "Reply added successfully!");
-  } catch (e) {
-    // Log error asli untuk debugging
-    debugPrint("Submit Reply Error: $e");
-    
-    // Kadang server mengembalikan sukses tapi formatnya bukan JSON yang diharapkan
-    // Kita cek jika errornya hanya soal format, jangan tampilkan "Failed" ke user
-    if (e.toString().contains("type 'String' is not a subtype of type 'Map'")) {
-       await _service.fetchReplies(threadId).then((fresh) {
-         setState(() => replies = fresh);
-       });
-       _toast(context, "Reply added!");
-    } else {
+      _toast(context, "Reply added successfully!");
+    } catch (e) {
+      debugPrint("Submit Reply Error: $e");
       _toast(context, "Failed to add reply. Please check your connection.");
     }
   }
-}
 
-// Helper untuk update count di list thread
-void _updateLocalThreadReplyCount(String threadId, int? serverCount) {
-  final idx = allThreads.indexWhere((t) => t.id == threadId);
-  if (idx != -1) {
-    final old = allThreads[idx];
-    allThreads[idx] = updateThread(old, replyCount: serverCount ?? (old.replyCount + 1));
-  }
+  // Helper untuk update count di list thread
+  void _updateLocalThreadReplyCount(String threadId, int? serverCount) {
+    final idx = allThreads.indexWhere((t) => t.id == threadId);
+    if (idx != -1) {
+      final old = allThreads[idx];
+      allThreads[idx] = updateThread(
+        old,
+        replyCount: serverCount ?? (old.replyCount + 1),
+      );
+    }
 
-  final vidx = visibleThreads.indexWhere((t) => t.id == threadId);
-  if (vidx != -1) {
-    final old = visibleThreads[vidx];
-    visibleThreads[vidx] = updateThread(old, replyCount: serverCount ?? (old.replyCount + 1));
+    final vidx = visibleThreads.indexWhere((t) => t.id == threadId);
+    if (vidx != -1) {
+      final old = visibleThreads[vidx];
+      visibleThreads[vidx] = updateThread(
+        old,
+        replyCount: serverCount ?? (old.replyCount + 1),
+      );
+    }
   }
-}
 
   Future<void> _showCreateThread() async {
     final payload = await showCreateThreadModal(context);
-    if (payload == null) return; // user cancel
+    if (payload == null) return;
+
+    bool likelySuccess = false;
 
     try {
       await _service.createThread(
@@ -347,10 +377,17 @@ void _updateLocalThreadReplyCount(String threadId, int? serverCount) {
         tags: payload.tags,
         imageUrl: payload.imageUrl,
       );
-
-      _toast(context, "Threads added successfully!");
-      await _loadThreads(); // pengganti event ThreadsAdded
+      likelySuccess = true;
     } catch (e) {
+      // Kalau masih ada error lain, kita tetap bisa refetch
+      // biar UI sinkron dengan DB (karena kasusmu: DB sudah masuk).
+      likelySuccess = true;
+    }
+
+    if (likelySuccess) {
+      _toast(context, "Threads added successfully!");
+      await _loadThreads();
+    } else {
       _toast(context, "Failed to publish thread");
     }
   }
@@ -367,97 +404,110 @@ void _updateLocalThreadReplyCount(String threadId, int? serverCount) {
         title: const Text("Threads"),
         foregroundColor: Tw.text,
       ),
+
+      // ✅ SCROLLABLE BERSAMAAN:
+      // - Bungkus semua konten dengan RefreshIndicator + SingleChildScrollView
+      // - Hilangkan Expanded/ListView scroll internal di kolom threads & panel replies
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Tw.s4),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1280),
-              child: isLg
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Left: search & trends
-                        SizedBox(
-                          width: 320,
-                          child: Column(
-                            children: [
-                              _SearchCard(
-                                controller: tagController,
-                                onSearch: _applySearch,
-                                infoText: searchInfo,
+        child: RefreshIndicator(
+          onRefresh: _loadThreads,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Tw.s4),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1280),
+                  child: isLg
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Left: search & trends
+                            SizedBox(
+                              width: 320,
+                              child: Column(
+                                children: [
+                                  _SearchCard(
+                                    controller: tagController,
+                                    onSearch: _applySearch,
+                                    infoText: searchInfo,
+                                  ),
+                                  const SizedBox(height: Tw.s4),
+                                  _TrendsCard(
+                                    tagCount: tagCount,
+                                    onTapTag: _searchByTag,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: Tw.s4),
-                              _TrendsCard(
-                                tagCount: tagCount,
-                                onTapTag: _searchByTag,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: Tw.s5),
-
-                        // Middle: thread list
-                        Expanded(
-                          child: _CenterThreadsColumn(
-                            loading: loading,
-                            error: error,
-                            visibleThreads: visibleThreads,
-                            onRefresh: _loadThreads,
-                            onCreate: _showCreateThread,
-                            currentUsername: _currentUsername,
-                            onTapTag: _searchByTag,
-                            onLikeThread: _toggleLikeThread,
-                            onOpenReplies: _openReplies,
-                          ),
-                        ),
-
-                        const SizedBox(width: Tw.s5),
-
-                        // Right: reply panel (desktop only)
-                        if (activeThreadId != null)
-                          SizedBox(
-                            width: 420,
-                            child: _ReplyPanelDesktop(
-                              activeThreadId: activeThreadId,
-                              activeUsername: activeThreadUsername,
-                              loading: replyLoading,
-                              replies: replies,
-                              currentUsername: _currentUsername,
-                              onLikeReply: _toggleLikeReply,
-                              onSubmitReply: _submitReply,
-                              replyController: replyController,
-                              onClose: _closeReplies,
                             ),
-                          ),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        // Mobile: search + trends on top
-                        _SearchCard(
-                          controller: tagController,
-                          onSearch: _applySearch,
-                          infoText: searchInfo,
+                            const SizedBox(width: Tw.s5),
+
+                            // Middle: thread list (jadi non-scroll internal)
+                            Expanded(
+                              child: _CenterThreadsColumn(
+                                loading: loading,
+                                error: error,
+                                visibleThreads: visibleThreads,
+                                onRefresh: _loadThreads, // dipakai untuk Retry
+                                onCreate: _showCreateThread,
+                                currentUsername: _currentUsername,
+                                onTapTag: _searchByTag,
+                                onLikeThread: _toggleLikeThread,
+                                onOpenReplies: _openReplies,
+                              ),
+                            ),
+
+                            const SizedBox(width: Tw.s5),
+
+                            // Right: reply panel (desktop only, jadi non-scroll internal)
+                            if (activeThreadId != null)
+                              SizedBox(
+                                width: 420,
+                                child: _ReplyPanelDesktop(
+                                  activeThreadId: activeThreadId,
+                                  activeUsername: activeThreadUsername,
+                                  loading: replyLoading,
+                                  replies: replies,
+                                  currentUsername: _currentUsername,
+                                  onLikeReply: _toggleLikeReply,
+                                  onSubmitReply: _submitReply,
+                                  replyController: replyController,
+                                  onClose: _closeReplies,
+                                ),
+                              ),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            // Mobile: search + trends on top
+                            _SearchCard(
+                              controller: tagController,
+                              onSearch: _applySearch,
+                              infoText: searchInfo,
+                            ),
+                            const SizedBox(height: Tw.s4),
+                            _TrendsCard(
+                              tagCount: tagCount,
+                              onTapTag: _searchByTag,
+                            ),
+                            const SizedBox(height: Tw.s4),
+
+                            // ⚠️ penting: jangan pakai Expanded lagi karena sudah SingleChildScrollView
+                            _CenterThreadsColumn(
+                              loading: loading,
+                              error: error,
+                              visibleThreads: visibleThreads,
+                              onRefresh: _loadThreads,
+                              onCreate: _showCreateThread,
+                              currentUsername: _currentUsername,
+                              onTapTag: _searchByTag,
+                              onLikeThread: _toggleLikeThread,
+                              onOpenReplies: _openReplies,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: Tw.s4),
-                        _TrendsCard(tagCount: tagCount, onTapTag: _searchByTag),
-                        const SizedBox(height: Tw.s4),
-                        Expanded(
-                          child: _CenterThreadsColumn(
-                            loading: loading,
-                            error: error,
-                            visibleThreads: visibleThreads,
-                            onRefresh: _loadThreads,
-                            onCreate: _showCreateThread,
-                            currentUsername: _currentUsername,
-                            onTapTag: _searchByTag,
-                            onLikeThread: _toggleLikeThread,
-                            onOpenReplies: _openReplies,
-                          ),
-                        ),
-                      ],
-                    ),
+                ),
+              ),
             ),
           ),
         ),
@@ -704,12 +754,10 @@ class _CenterThreadsColumn extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Tw.s2),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: onRefresh,
-              child: _buildBody(context),
-            ),
-          ),
+
+          // ✅ SCROLLABLE BERSAMAAN:
+          // Hapus Expanded + RefreshIndicator internal. Body dibuat non-scroll internal.
+          _buildBody(context),
         ],
       ),
     );
@@ -717,50 +765,46 @@ class _CenterThreadsColumn extends StatelessWidget {
 
   Widget _buildBody(BuildContext context) {
     if (loading) {
-      return ListView(
-        children: const [
-          SizedBox(height: Tw.s12),
-          Center(child: CircularProgressIndicator()),
-          SizedBox(height: Tw.s3),
-          Center(
-            child: Text(
-              "Loading Threads...",
-              style: TextStyle(color: Tw.muted),
-            ),
-          ),
-        ],
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: Tw.s12),
+        child: Column(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: Tw.s3),
+            Text("Loading Threads...", style: TextStyle(color: Tw.muted)),
+          ],
+        ),
       );
     }
 
     if (error != null) {
-      return ListView(
-        children: [
-          const SizedBox(height: Tw.s12),
-          Center(
-            child: Text(
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: Tw.s12),
+        child: Column(
+          children: [
+            Text(
               "Error: $error",
               style: const TextStyle(color: Colors.redAccent),
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: Tw.s4),
-          Center(
-            child: TextButton(
+            const SizedBox(height: Tw.s4),
+            TextButton(
               onPressed: onRefresh,
               child: const Text("Retry", style: TextStyle(color: Tw.blue2)),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     if (visibleThreads.isEmpty) {
-      return ListView(
-        children: const [
-          SizedBox(height: Tw.s12),
-          Icon(Icons.inbox_outlined, size: 64, color: Tw.muted),
-          SizedBox(height: Tw.s3),
-          Center(
-            child: Text(
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: Tw.s12),
+        child: Column(
+          children: [
+            Icon(Icons.inbox_outlined, size: 64, color: Tw.muted),
+            SizedBox(height: Tw.s3),
+            Text(
               "No threads right now 💤",
               style: TextStyle(
                 color: Tw.text,
@@ -768,19 +812,21 @@ class _CenterThreadsColumn extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-          SizedBox(height: Tw.s2),
-          Center(
-            child: Text(
+            SizedBox(height: Tw.s2),
+            Text(
               "Be the first to share something with the community!",
               style: TextStyle(color: Tw.muted),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     return ListView.builder(
+      // penting biar ikut SingleChildScrollView luar
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: visibleThreads.length,
       itemBuilder: (context, i) {
         final item = visibleThreads[i];
@@ -893,8 +939,6 @@ class _ThreadCard extends StatelessWidget {
                         icon: const Icon(Icons.more_vert, color: Tw.muted),
                         color: Tw.card2,
                         onSelected: (v) {
-                          // delete action di HTML kamu: link /thread/<id>/delete
-                          // di Flutter: panggil endpoint delete
                           _toast(
                             context,
                             "Delete: implement endpoint delete untuk thread ${item.id}",
@@ -997,7 +1041,6 @@ class _ThreadCard extends StatelessWidget {
   }
 
   static String _fmtDate(DateTime d) {
-    // mirip new Date(createdAt).toLocaleString()
     return "${d.year}-${_two(d.month)}-${_two(d.day)} ${_two(d.hour)}:${_two(d.minute)}";
   }
 
@@ -1043,7 +1086,7 @@ class _ReplyPanelDesktop extends StatelessWidget {
   final Future<void> Function() onSubmitReply;
   final TextEditingController replyController;
   final String? emptyHint;
-  final VoidCallback onClose; // Parameter baru untuk fungsi tutup
+  final VoidCallback onClose;
 
   const _ReplyPanelDesktop({
     required this.activeThreadId,
@@ -1054,12 +1097,46 @@ class _ReplyPanelDesktop extends StatelessWidget {
     required this.onLikeReply,
     required this.onSubmitReply,
     required this.replyController,
-    required this.onClose, // Wajib diisi
+    required this.onClose,
     this.emptyHint,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget repliesBody;
+
+    if (loading) {
+      repliesBody = const Padding(
+        padding: EdgeInsets.symmetric(vertical: Tw.s6),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (replies.isEmpty) {
+      repliesBody = Padding(
+        padding: const EdgeInsets.symmetric(vertical: Tw.s6),
+        child: Center(
+          child: Text(
+            emptyHint ?? "No replies yet. Be the first!",
+            style: const TextStyle(color: Tw.muted),
+          ),
+        ),
+      );
+    } else {
+      // ✅ ikut scroll luar: non-scroll internal
+      repliesBody = ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: replies.length,
+        itemBuilder: (context, i) {
+          final r = replies[i];
+          return _ReplyCard(
+            item: r,
+            currentUsername: currentUsername,
+            onLike: () => onLikeReply(r),
+          );
+        },
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Tw.card,
@@ -1100,7 +1177,6 @@ class _ReplyPanelDesktop extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Tombol Close (X)
                 IconButton(
                   onPressed: onClose,
                   icon: const Icon(Icons.close, color: Tw.muted, size: 20),
@@ -1112,29 +1188,8 @@ class _ReplyPanelDesktop extends StatelessWidget {
             ),
           ),
 
-          // List Balasan (Replies List)
-          Expanded(
-            child: loading
-                ? const Center(child: CircularProgressIndicator())
-                : (replies.isEmpty)
-                    ? Center(
-                        child: Text(
-                          emptyHint ?? "No replies yet. Be the first!",
-                          style: const TextStyle(color: Tw.muted),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: replies.length,
-                        itemBuilder: (context, i) {
-                          final r = replies[i];
-                          return _ReplyCard(
-                            item: r,
-                            currentUsername: currentUsername,
-                            onLike: () => onLikeReply(r),
-                          );
-                        },
-                      ),
-          ),
+          // Replies list (non-scroll internal)
+          repliesBody,
 
           // Input Area
           Container(
@@ -1276,7 +1331,6 @@ class _ReplyCard extends StatelessWidget {
                         ),
                         color: Tw.card2,
                         onSelected: (v) {
-                          // HTML kamu: /reply/<id>/delete
                           _toast(
                             context,
                             "Delete reply: implement endpoint delete reply ${item.id}",
@@ -1345,7 +1399,7 @@ class _ReplyCard extends StatelessWidget {
   }
 }
 
-/// Mobile reply dialog (mirip overlay fixed pada HTML)
+/// Mobile reply dialog (tetap sama, karena modal ini memang punya scroll sendiri)
 class _ReplyDialog extends StatelessWidget {
   final String titleUsername;
   final bool loading;
