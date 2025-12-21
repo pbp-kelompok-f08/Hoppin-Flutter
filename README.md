@@ -4,8 +4,10 @@
 ## 🚀 Deployment & Design
 <details>
   <summary>Lihat Link</summary>
+
 [![Build Status](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09/status.svg?token=H5DLOWvcwAn4XbS18MB4Ng&branch=main)](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09)
 
+- **Link Bitrise:** [Klik di sini](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09/installable-artifacts/1d6ab89b307125e6/public-install-page/253ecce99f513bd3fe6507edb4b80957)
 - **Link Deployment:** [Klik di sini](https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/)
 - **Link Design:** [Klik di sini](https://www.figma.com/design/Osg0CvVAYUswUTmNVduHXK/PBP08?node-id=0-1&t=FcctgViSzMdoNSsh-1)  
 
