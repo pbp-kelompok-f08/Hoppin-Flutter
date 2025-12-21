@@ -1,8 +1,10 @@
 import 'dart:convert';
 
-List<Group> groupFromJson(String str) => List<Group>.from(json.decode(str).map((x) => Group.fromJson(x)));
+List<Group> groupFromJson(String str) =>
+    List<Group>.from(json.decode(str).map((x) => Group.fromJson(x)));
 
-String groupToJson(List<Group> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String groupToJson(List<Group> data) =>
+    json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class Group {
     String id;
@@ -31,7 +33,7 @@ class Group {
             : null,
     );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "id": id,
         "match": match,
         "name": name,
@@ -41,15 +43,15 @@ class Group {
 }
 
 class LastChat {
-    String username;
-    String message;
-    DateTime createdAt;
+  String username;
+  String message;
+  DateTime createdAt;
 
-    LastChat({
-        required this.username,
-        required this.message,
-        required this.createdAt,
-    });
+  LastChat({
+    required this.username,
+    required this.message,
+    required this.createdAt,
+  });
 
     factory LastChat.fromJson(Map<String, dynamic> json) {
       // Handle username as string or integer (Django might return user PK)
@@ -73,15 +75,12 @@ class LastChat {
       );
     }
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "username": username,
         "message": message,
         "createdAt": createdAt.toIso8601String(),
-    };
+      };
 
-    @override
-    String toString()
-    {
-      return "$username: $message";
-    }
+  @override
+  String toString() => "$username: $message";
 }

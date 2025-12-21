@@ -8,6 +8,8 @@ class UserProfile {
   final String dateJoined;
   final bool isOwnProfile;
 
+  static const String _baseUrl = 'http://127.0.0.1:8000';
+
   UserProfile({
     required this.username,
     required this.email,
@@ -57,5 +59,12 @@ class UserProfile {
     } catch (e) {
       return 'Member since $dateJoined';
     }
+  }
+
+  // Helper to get full profile picture URL
+  String? get profilePictureUrl {
+    if (profilePicture == null || profilePicture!.isEmpty) return null;
+    if (profilePicture!.startsWith('http')) return profilePicture;
+    return '$_baseUrl$profilePicture';
   }
 }

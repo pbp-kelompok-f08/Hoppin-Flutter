@@ -1,10 +1,17 @@
-import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // kIsWeb
+import 'package:image_picker/image_picker.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+
 import 'package:flutter_hoppin/userprofile/models/user_profile.dart';
 import 'package:flutter_hoppin/userprofile/services/profile_service.dart';
+import 'package:flutter_hoppin/userprofile/services/profile_service_web.dart';
 import 'package:flutter_hoppin/screens/login.dart';
+
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 class EditProfilePage extends StatefulWidget {
   final UserProfile profile;
@@ -19,6 +26,8 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  Object? _pickedImage; 
+  bool _removeImage = false;
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _emailController;
   late TextEditingController _bioController;
@@ -64,10 +73,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    final request = context.read<CookieRequest>();
 
     try {
-      final request = context.read<CookieRequest>();
-      final response = await ProfileService.updateProfile(
+      final res = await ProfileService.updateProfile(
         request,
         email: _emailController.text,
         bio: _bioController.text,
@@ -75,39 +84,44 @@ class _EditProfilePageState extends State<EditProfilePage> {
         skillLevel: _selectedSkillLevel,
       );
 
-      if (mounted) {
-        if (response['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context, true); // Return true to trigger refresh
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['message'] ?? 'Failed to update profile'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (res['success'] != true) {
+        throw res['message'] ?? 'Update failed';
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+
+      if (_pickedImage != null && kIsWeb) {
+        await ProfileServiceWeb.uploadProfilePicture(
+          request,
+          _pickedImage as html.File,
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+
+      if (_removeImage) {
+        await ProfileService.removeProfilePicture(request);
       }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
   void _showDeleteConfirmation() {
     showDialog(
@@ -115,6 +129,53 @@ class _EditProfilePageState extends State<EditProfilePage> {
       builder: (context) => _DeleteAccountDialog(),
     );
   }
+
+  Future<void> _pickImage() async {
+    if (!kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Change profile picture is only available on Web'),
+        ),
+      );
+      return;
+    }
+
+    final image = await ProfileServiceWeb.pickImage();
+    if (image == null) return;
+
+    setState(() {
+      _pickedImage = image;
+      _removeImage = false;
+    });
+  }
+
+  void _removeImageAction() {
+    setState(() {
+      _pickedImage = null;
+      _removeImage = true;
+    });
+  }
+
+  ImageProvider? _buildAvatarImage() {
+    if (_pickedImage != null) {
+      if (kIsWeb) {
+        return NetworkImage(
+          ProfileServiceWeb.previewUrl(_pickedImage as Object),
+        );
+      } else {
+        return FileImage(
+          File((_pickedImage as XFile).path),
+        );
+      }
+    }
+
+    if (!_removeImage && widget.profile.profilePictureUrl != null) {
+      return NetworkImage(widget.profile.profilePictureUrl!);
+    }
+
+    return null;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +200,63 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Profile Picture
+              Center(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 52,
+                            backgroundColor: Colors.grey[800],
+                            backgroundImage: _buildAvatarImage(),
+                            child: _buildAvatarImage() == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 48,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF9DB4C0),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF121212),
+                                width: 2,
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: Color(0xFF253237),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    if (_buildAvatarImage() != null)
+                      TextButton(
+                        onPressed: _removeImageAction,
+                        child: const Text(
+                          'Remove photo',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+
               // Username (disabled)
               _buildTextField(
                 label: 'Username',
