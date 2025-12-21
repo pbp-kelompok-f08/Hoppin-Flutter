@@ -1,8 +1,15 @@
 # 📌 Proyek Django F08
 
-## Deployment
 
+## 🚀 Deployment & Design
+<details>
+  <summary>Lihat Link</summary>
 [![Build Status](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09/status.svg?token=H5DLOWvcwAn4XbS18MB4Ng&branch=main)](https://app.bitrise.io/app/18540101-a905-4b6e-8ca5-ac8abcf30b09)
+
+- **Link Deployment:** [Klik di sini](https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/)
+- **Link Design:** [Klik di sini](https://www.figma.com/design/Osg0CvVAYUswUTmNVduHXK/PBP08?node-id=0-1&t=FcctgViSzMdoNSsh-1)  
+
+</details>
 
 ---
 
@@ -249,11 +256,4 @@ Flutter kemudian menampilkan data tersebut di UI:
 - Menampilkan status booking  
 - Real-time update untuk chat (jika menggunakan WebSocket)
 
-## 🚀 Deployment & Design
 <details>
-  <summary>Lihat Link</summary>
-
-- **Link Deployment:** [Klik di sini](https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/)
-- **Link Design:** [Klik di sini](https://www.figma.com/design/Osg0CvVAYUswUTmNVduHXK/PBP08?node-id=0-1&t=FcctgViSzMdoNSsh-1)  
-
-</details>
