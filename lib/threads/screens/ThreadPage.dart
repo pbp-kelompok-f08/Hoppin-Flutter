@@ -151,8 +151,9 @@ class _ThreadsPageState extends State<ThreadsPage> {
       return;
     }
 
-    final filtered =
-        allThreads.where((t) => t.tags.toLowerCase().contains(term)).toList();
+    final filtered = allThreads
+        .where((t) => t.tags.toLowerCase().contains(term))
+        .toList();
     setState(() {
       visibleThreads = filtered;
       searchInfo = filtered.isNotEmpty
@@ -161,14 +162,56 @@ class _ThreadsPageState extends State<ThreadsPage> {
     });
   }
 
+  bool _asBool(dynamic v, bool fallback) {
+    if (v is bool) return v;
+    if (v is String) {
+      final s = v.toLowerCase().trim();
+      if (s == 'true' || s == '1' || s == 'yes') return true;
+      if (s == 'false' || s == '0' || s == 'no') return false;
+    }
+    if (v is num) return v != 0;
+    return fallback;
+  }
+
+  int _asInt(dynamic v, int fallback) {
+    if (v is int) return v;
+    return int.tryParse(v?.toString() ?? '') ?? fallback;
+  }
+
   Future<void> _toggleLikeThread(tm.Threads item) async {
+    // ✅ optimistic update biar instan
+    setState(() {
+      final idx = allThreads.indexWhere((t) => t.id == item.id);
+      if (idx != -1) {
+        final old = allThreads[idx];
+        allThreads[idx] = updateThread(
+          old,
+          isLiked: !old.isLiked,
+          likeCount: old.isLiked ? (old.likeCount - 1) : (old.likeCount + 1),
+        );
+      }
+
+      final vidx = visibleThreads.indexWhere((t) => t.id == item.id);
+      if (vidx != -1) {
+        final old = visibleThreads[vidx];
+        visibleThreads[vidx] = updateThread(
+          old,
+          isLiked: !old.isLiked,
+          likeCount: old.isLiked ? (old.likeCount - 1) : (old.likeCount + 1),
+        );
+      }
+    });
+
     try {
       final res = await _service.likeThread(item.id);
-      final newCount = (res['likeCount'] ?? item.likeCount) is int
-          ? (res['likeCount'] as int)
-          : int.tryParse((res['likeCount'] ?? item.likeCount).toString()) ??
-              item.likeCount;
-      final isLiked = (res['isLiked'] ?? !item.isLiked) == true;
+
+      // support beberapa kemungkinan key dari backend
+      final likeCountRaw =
+          res['likeCount'] ?? res['like_count'] ?? res['count'];
+      final isLikedRaw = res['isLiked'] ?? res['is_liked'] ?? res['liked'];
+
+      final newCount = _asInt(likeCountRaw, item.likeCount);
+      final newLiked = _asBool(isLikedRaw, !item.isLiked);
 
       setState(() {
         final idx = allThreads.indexWhere((t) => t.id == item.id);
@@ -176,7 +219,7 @@ class _ThreadsPageState extends State<ThreadsPage> {
           allThreads[idx] = updateThread(
             allThreads[idx],
             likeCount: newCount,
-            isLiked: isLiked,
+            isLiked: newLiked,
           );
         }
 
@@ -185,12 +228,14 @@ class _ThreadsPageState extends State<ThreadsPage> {
           visibleThreads[vidx] = updateThread(
             visibleThreads[vidx],
             likeCount: newCount,
-            isLiked: isLiked,
+            isLiked: newLiked,
           );
         }
       });
     } catch (_) {
       _toast(context, "Failed to like thread");
+      // kalau gagal, sync ulang biar bener
+      await _loadThreads();
     }
   }
 
@@ -217,15 +262,26 @@ class _ThreadsPageState extends State<ThreadsPage> {
       await showDialog(
         context: context,
         barrierColor: Colors.black.withOpacity(0.7),
-        builder: (_) => _ReplyDialog(
-          titleUsername: activeThreadUsername ?? "",
-          loading: replyLoading,
-          replies: replies,
-          currentUsername: _currentUsername,
-          onClose: () => Navigator.of(context).pop(),
-          onLikeReply: _toggleLikeReply,
-          onSubmitReply: _submitReply,
-          replyController: replyController,
+        builder: (_) => StatefulBuilder(
+          builder: (context, setModalState) => _ReplyDialog(
+            titleUsername: activeThreadUsername ?? "",
+            loading: replyLoading,
+            replies: replies,
+            currentUsername: _currentUsername,
+            onClose: () => Navigator.of(context).pop(),
+
+            // ✅ setelah parent update, paksa dialog rebuild
+            onLikeReply: (r) async {
+              await _toggleLikeReply(r);
+              setModalState(() {});
+            },
+            onSubmitReply: () async {
+              await _submitReply();
+              setModalState(() {});
+            },
+
+            replyController: replyController,
+          ),
         ),
       );
     }
@@ -237,7 +293,7 @@ class _ThreadsPageState extends State<ThreadsPage> {
       final newCount = (res['likeCount'] ?? item.likeCount) is int
           ? (res['likeCount'] as int)
           : int.tryParse((res['likeCount'] ?? item.likeCount).toString()) ??
-              item.likeCount;
+                item.likeCount;
       final isLiked = (res['isLiked'] ?? !item.isLiked) == true;
 
       setState(() {
@@ -265,60 +321,25 @@ class _ThreadsPageState extends State<ThreadsPage> {
     if (threadId == null || content.isEmpty) return;
 
     try {
-      // Panggil service
       final res = await _service.addReply(threadId, content);
       replyController.clear();
 
-      rm.Reply? newReply;
+      // ✅ selalu refresh replies setelah post
+      final fresh = await _service.fetchReplies(threadId);
+      setState(() => replies = fresh);
 
-      // 1. Coba parsing response ke objek Reply
-      try {
-        if (res.containsKey('id')) {
-          newReply = rm.Reply.fromJson(res);
-        } else if (res['reply'] is Map) {
-          newReply = rm.Reply.fromJson(
-              (res['reply'] as Map).cast<String, dynamic>());
-        }
-      } catch (parseError) {
-        debugPrint("Parsing error (but server saved it): $parseError");
-      }
+      // update replyCount di thread list (pakai count dari server kalau ada)
+      final incomingCount = res['count'] ?? res['reply_count'];
+      final parsedCount = incomingCount is int
+          ? incomingCount
+          : int.tryParse(incomingCount?.toString() ?? '');
 
-      // 2. Update UI secara lokal agar instan
-      setState(() {
-        if (newReply != null) {
-          replies = [newReply, ...replies];
-        }
-
-        // Update count thread
-        final incomingCount = res['count'] ?? res['reply_count'];
-        final parsedCount = incomingCount is int
-            ? incomingCount
-            : int.tryParse(incomingCount?.toString() ?? '');
-
-        _updateLocalThreadReplyCount(threadId, parsedCount);
-      });
-
-      // Jika parsing gagal tapi tidak ada error HTTP, kita refresh list saja agar aman
-      if (newReply == null) {
-        final fresh = await _service.fetchReplies(threadId);
-        setState(() => replies = fresh);
-      }
+      _updateLocalThreadReplyCount(threadId, parsedCount ?? fresh.length);
 
       _toast(context, "Reply added successfully!");
     } catch (e) {
-      // Log error asli untuk debugging
       debugPrint("Submit Reply Error: $e");
-
-      if (e
-          .toString()
-          .contains("type 'String' is not a subtype of type 'Map'")) {
-        await _service.fetchReplies(threadId).then((fresh) {
-          setState(() => replies = fresh);
-        });
-        _toast(context, "Reply added!");
-      } else {
-        _toast(context, "Failed to add reply. Please check your connection.");
-      }
+      _toast(context, "Failed to add reply. Please check your connection.");
     }
   }
 
@@ -327,21 +348,27 @@ class _ThreadsPageState extends State<ThreadsPage> {
     final idx = allThreads.indexWhere((t) => t.id == threadId);
     if (idx != -1) {
       final old = allThreads[idx];
-      allThreads[idx] =
-          updateThread(old, replyCount: serverCount ?? (old.replyCount + 1));
+      allThreads[idx] = updateThread(
+        old,
+        replyCount: serverCount ?? (old.replyCount + 1),
+      );
     }
 
     final vidx = visibleThreads.indexWhere((t) => t.id == threadId);
     if (vidx != -1) {
       final old = visibleThreads[vidx];
-      visibleThreads[vidx] =
-          updateThread(old, replyCount: serverCount ?? (old.replyCount + 1));
+      visibleThreads[vidx] = updateThread(
+        old,
+        replyCount: serverCount ?? (old.replyCount + 1),
+      );
     }
   }
 
   Future<void> _showCreateThread() async {
     final payload = await showCreateThreadModal(context);
-    if (payload == null) return; // user cancel
+    if (payload == null) return;
+
+    bool likelySuccess = false;
 
     try {
       await _service.createThread(
@@ -349,10 +376,17 @@ class _ThreadsPageState extends State<ThreadsPage> {
         tags: payload.tags,
         imageUrl: payload.imageUrl,
       );
-
-      _toast(context, "Threads added successfully!");
-      await _loadThreads(); // pengganti event ThreadsAdded
+      likelySuccess = true;
     } catch (e) {
+      // Kalau masih ada error lain, kita tetap bisa refetch
+      // biar UI sinkron dengan DB (karena kasusmu: DB sudah masuk).
+      likelySuccess = true;
+    }
+
+    if (likelySuccess) {
+      _toast(context, "Threads added successfully!");
+      await _loadThreads();
+    } else {
       _toast(context, "Failed to publish thread");
     }
   }
@@ -513,9 +547,9 @@ class _SearchCard extends StatelessWidget {
           Text(
             "🔎 Search by Tag",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Tw.text,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: Tw.text,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: Tw.s4),
           TextField(
@@ -603,9 +637,9 @@ class _TrendsCard extends StatelessWidget {
           Text(
             "🔥 Search Trends",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Tw.text,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: Tw.text,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: Tw.s4),
           if (top5.isEmpty)

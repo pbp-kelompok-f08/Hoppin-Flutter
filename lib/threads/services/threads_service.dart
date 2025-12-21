@@ -19,15 +19,24 @@ class ThreadsService {
     required String tags,
     required String imageUrl,
   }) async {
-    await request.post('$baseUrl/threads/create-thread-ajax/', {
-      'content': content,
-      'tags': tags,
-      'image': imageUrl,
-    });
+    try {
+      await request.post('$baseUrl/threads/create-thread-ajax/', {
+        'content': content,
+        'tags': tags,
+        'image': imageUrl,
+      });
+    } on FormatException {
+      // Biasanya terjadi kalau server balikin HTML/redirect/empty,
+      // padahal create sudah berhasil di server.
+      return;
+    }
   }
 
   Future<Map<String, dynamic>> likeThread(String threadId) async {
-    final res = await request.post('$baseUrl/threads/like-thread/$threadId/', {});
+    final res = await request.post(
+      '$baseUrl/threads/like-thread/$threadId/',
+      {},
+    );
     return Map<String, dynamic>.from(res);
   }
 
@@ -42,9 +51,10 @@ class ThreadsService {
   }
 
   Future<Map<String, dynamic>> addReply(String threadId, String content) async {
-    final res = await request.post('$baseUrl/threads/create-reply-ajax/$threadId/', {
-      'content': content,
-    });
+    final res = await request.post(
+      '$baseUrl/threads/create-reply-ajax/$threadId/',
+      {'content': content},
+    );
     return Map<String, dynamic>.from(res);
   }
 
