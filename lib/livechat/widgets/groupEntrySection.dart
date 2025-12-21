@@ -62,15 +62,14 @@ class groupEntrySection extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Text(
-                          hasChat
-                              ? _formatTime(group.lastChat!.createdAt)
-                              : "",
-                          style: TextStyle(
-                            color: MainColors.secondaryCardColor,
-                            fontSize: 12,
+                        if (group.lastChat != null)
+                          Text(
+                            _formatTime(group.lastChat!.createdAt),
+                            style: TextStyle(
+                              color: MainColors.secondaryCardColor,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
                       ],
                     ),
 
@@ -78,16 +77,17 @@ class groupEntrySection extends StatelessWidget {
 
                     // ===== LAST CHAT =====
                     Text(
-                      hasChat
-                          ? group.lastChat!.toString()
-                          : "Belum ada chat",
+                      group.lastChat != null 
+                          ? group.lastChat!.toString() 
+                          : 'No messages yet',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: MainColors.secondaryCardColor,
                         fontSize: 14,
-                        fontStyle:
-                            hasChat ? FontStyle.normal : FontStyle.italic,
+                        fontStyle: group.lastChat == null 
+                            ? FontStyle.italic 
+                            : FontStyle.normal,
                       ),
                     ),
                   ],
