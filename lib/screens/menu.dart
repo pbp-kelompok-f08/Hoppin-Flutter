@@ -5,6 +5,7 @@ import 'package:flutter_hoppin/livechat/screens/groupListPage.dart';
 import 'package:flutter_hoppin/matches/services/match_service.dart';
 import 'package:flutter_hoppin/screens/match_page.dart';
 import 'package:flutter_hoppin/screens/profile_page.dart';
+import 'package:flutter_hoppin/threads/screens/ThreadPage.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -25,9 +26,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 1;
+  int _counter = 0;
 
-  final pages = const [Placeholder(), VenueEntryListPage(), MatchPage(), GroupListPage(), ProfilePage()];
+  final pages = const [ThreadsPage(), VenueEntryListPage(), MatchPage(), GroupListPage(), ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
