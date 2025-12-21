@@ -112,6 +112,14 @@ class _ThreadsPageState extends State<ThreadsPage> {
       setState(() => loading = false);
     }
   }
+  void _closeReplies() {
+    setState(() {
+      activeThreadId = null;
+      activeThreadUsername = null;
+      replies = [];
+      replyController.clear();
+    });
+  }
 
   void _rebuildTagTrends(List<tm.Threads> items) {
     final Map<String, int> c = {};
@@ -252,71 +260,81 @@ class _ThreadsPageState extends State<ThreadsPage> {
   }
 
   Future<void> _submitReply() async {
-    final threadId = activeThreadId;
-    final content = replyController.text.trim();
-    if (threadId == null || content.isEmpty) return;
+  final threadId = activeThreadId;
+  final content = replyController.text.trim();
+  if (threadId == null || content.isEmpty) return;
 
+  try {
+    // Panggil service
+    final res = await _service.addReply(threadId, content);
+    replyController.clear();
+
+    rm.Reply? newReply;
+
+    // 1. Coba parsing response ke objek Reply
     try {
-      final res = await _service.addReply(threadId, content);
-      replyController.clear();
-
-      rm.Reply? newReply;
-
-      // Case 1: response langsung reply object
-      if (res.containsKey('id') &&
-          res.containsKey('content') &&
-          res.containsKey('thread_id')) {
+      if (res.containsKey('id')) {
         newReply = rm.Reply.fromJson(res);
+      } else if (res['reply'] is Map) {
+        newReply = rm.Reply.fromJson((res['reply'] as Map).cast<String, dynamic>());
       }
+    } catch (parseError) {
+      debugPrint("Parsing error (but server saved it): $parseError");
+    }
 
-      // Case 2: response dibungkus key "reply"
-      if (newReply == null && res['reply'] is Map) {
-        newReply = rm.Reply.fromJson(
-          (res['reply'] as Map).cast<String, dynamic>(),
-        );
-      }
-
-      // Kalau berhasil dapat reply -> prepend
+    // 2. Update UI secara lokal agar instan
+    setState(() {
       if (newReply != null) {
-        setState(() {
-          replies = [newReply!, ...replies];
-        });
-      } else {
-        final fresh = await _service.fetchReplies(threadId);
-        setState(() => replies = fresh);
+        replies = [newReply, ...replies];
       }
-
-      // update replyCount thread (pakai count dari server kalau ada)
-      final incomingCount = res['count'];
+      
+      // Update count thread
+      final incomingCount = res['count'] ?? res['reply_count'];
       final parsedCount = incomingCount is int
           ? incomingCount
-          : int.tryParse((incomingCount ?? '').toString());
+          : int.tryParse(incomingCount?.toString() ?? '');
 
-      setState(() {
-        final idx = allThreads.indexWhere((t) => t.id == threadId);
-        if (idx != -1) {
-          final old = allThreads[idx];
-          allThreads[idx] = updateThread(
-            old,
-            replyCount: parsedCount ?? (old.replyCount + 1),
-          );
-        }
+      _updateLocalThreadReplyCount(threadId, parsedCount);
+    });
 
-        final vidx = visibleThreads.indexWhere((t) => t.id == threadId);
-        if (vidx != -1) {
-          final old = visibleThreads[vidx];
-          visibleThreads[vidx] = updateThread(
-            old,
-            replyCount: parsedCount ?? (old.replyCount + 1),
-          );
-        }
-      });
+    // Jika parsing gagal tapi tidak ada error HTTP, kita refresh list saja agar aman
+    if (newReply == null) {
+      final fresh = await _service.fetchReplies(threadId);
+      setState(() => replies = fresh);
+    }
 
-      _toast(context, "reply added successfully!");
-    } catch (_) {
-      _toast(context, "Failed to add reply");
+    _toast(context, "Reply added successfully!");
+  } catch (e) {
+    // Log error asli untuk debugging
+    debugPrint("Submit Reply Error: $e");
+    
+    // Kadang server mengembalikan sukses tapi formatnya bukan JSON yang diharapkan
+    // Kita cek jika errornya hanya soal format, jangan tampilkan "Failed" ke user
+    if (e.toString().contains("type 'String' is not a subtype of type 'Map'")) {
+       await _service.fetchReplies(threadId).then((fresh) {
+         setState(() => replies = fresh);
+       });
+       _toast(context, "Reply added!");
+    } else {
+      _toast(context, "Failed to add reply. Please check your connection.");
     }
   }
+}
+
+// Helper untuk update count di list thread
+void _updateLocalThreadReplyCount(String threadId, int? serverCount) {
+  final idx = allThreads.indexWhere((t) => t.id == threadId);
+  if (idx != -1) {
+    final old = allThreads[idx];
+    allThreads[idx] = updateThread(old, replyCount: serverCount ?? (old.replyCount + 1));
+  }
+
+  final vidx = visibleThreads.indexWhere((t) => t.id == threadId);
+  if (vidx != -1) {
+    final old = visibleThreads[vidx];
+    visibleThreads[vidx] = updateThread(old, replyCount: serverCount ?? (old.replyCount + 1));
+  }
+}
 
   Future<void> _showCreateThread() async {
     final payload = await showCreateThreadModal(context);
@@ -396,22 +414,21 @@ class _ThreadsPageState extends State<ThreadsPage> {
                         const SizedBox(width: Tw.s5),
 
                         // Right: reply panel (desktop only)
-                        SizedBox(
-                          width: 420,
-                          child: _ReplyPanelDesktop(
-                            activeThreadId: activeThreadId, // <-- tambahin ini
-                            activeUsername: activeThreadUsername,
-                            loading: replyLoading,
-                            replies: replies,
-                            currentUsername: _currentUsername,
-                            onLikeReply: _toggleLikeReply,
-                            onSubmitReply: _submitReply,
-                            replyController: replyController,
-                            emptyHint: activeThreadId == null
-                                ? "Open a thread to see replies"
-                                : null,
+                        if (activeThreadId != null)
+                          SizedBox(
+                            width: 420,
+                            child: _ReplyPanelDesktop(
+                              activeThreadId: activeThreadId,
+                              activeUsername: activeThreadUsername,
+                              loading: replyLoading,
+                              replies: replies,
+                              currentUsername: _currentUsername,
+                              onLikeReply: _toggleLikeReply,
+                              onSubmitReply: _submitReply,
+                              replyController: replyController,
+                              onClose: _closeReplies,
+                            ),
                           ),
-                        ),
                       ],
                     )
                   : Column(
@@ -1001,8 +1018,10 @@ class _ReplyPanelDesktop extends StatelessWidget {
   final Future<void> Function() onSubmitReply;
   final TextEditingController replyController;
   final String? emptyHint;
+  final VoidCallback onClose; // Parameter baru untuk fungsi tutup
 
   const _ReplyPanelDesktop({
+    required this.activeThreadId,
     required this.activeUsername,
     required this.loading,
     required this.replies,
@@ -1010,6 +1029,7 @@ class _ReplyPanelDesktop extends StatelessWidget {
     required this.onLikeReply,
     required this.onSubmitReply,
     required this.replyController,
+    required this.onClose, // Wajib diisi
     this.emptyHint,
   });
 
@@ -1023,7 +1043,7 @@ class _ReplyPanelDesktop extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // header
+          // Header Panel
           Container(
             padding: const EdgeInsets.all(Tw.s4),
             decoration: BoxDecoration(
@@ -1049,41 +1069,49 @@ class _ReplyPanelDesktop extends StatelessWidget {
                       Text(
                         activeUsername == null
                             ? "—"
-                            : "Replying to $activeUsername",
+                            : "Replying to @$activeUsername",
                         style: const TextStyle(color: Tw.muted, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
+                // Tombol Close (X)
+                IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close, color: Tw.muted, size: 20),
+                  tooltip: "Close replies",
+                  splashRadius: 20,
+                  visualDensity: VisualDensity.compact,
+                ),
               ],
             ),
           ),
 
-          // list
+          // List Balasan (Replies List)
           Expanded(
             child: loading
                 ? const Center(child: CircularProgressIndicator())
-                : (emptyHint != null && replies.isEmpty)
-                ? Center(
-                    child: Text(
-                      emptyHint!,
-                      style: const TextStyle(color: Tw.muted),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: replies.length,
-                    itemBuilder: (context, i) {
-                      final r = replies[i];
-                      return _ReplyCard(
-                        item: r,
-                        currentUsername: currentUsername,
-                        onLike: () => onLikeReply(r),
-                      );
-                    },
-                  ),
+                : (replies.isEmpty)
+                    ? Center(
+                        child: Text(
+                          emptyHint ?? "No replies yet. Be the first!",
+                          style: const TextStyle(color: Tw.muted),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: replies.length,
+                        itemBuilder: (context, i) {
+                          final r = replies[i];
+                          return _ReplyCard(
+                            item: r,
+                            currentUsername: currentUsername,
+                            onLike: () => onLikeReply(r),
+                          );
+                        },
+                      ),
           ),
 
-          // input
+          // Input Area
           Container(
             padding: const EdgeInsets.all(Tw.s3),
             decoration: BoxDecoration(
@@ -1108,11 +1136,11 @@ class _ReplyPanelDesktop extends StatelessWidget {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Tw.border),
+                        borderSide: const BorderSide(color: Tw.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Tw.border),
+                        borderSide: const BorderSide(color: Tw.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

@@ -19,7 +19,7 @@ class _GroupListPageState extends State<GroupListPage> {
 
   Future<List<Group>> fetchGroups(CookieRequest request) async {
     try {
-      final response =
+    final response =
           await request.get('http://127.0.0.1:8000/liveChat/group/');
 
       // Handle null response

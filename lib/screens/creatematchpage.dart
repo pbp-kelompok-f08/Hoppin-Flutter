@@ -42,23 +42,23 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
   }
 
   Future<void> _pickDateTime() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
+              final d = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (d != null) {
-      final t = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-      if (t != null) {
-        setState(() {
+              );
+              if (d != null) {
+                final t = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (t != null) {
+                  setState(() {
           selectedDate = DateTime(d.year, d.month, d.day, t.hour, t.minute);
-        });
-      }
-    }
+                  });
+                }
+              }
   }
 
   Future<void> _submit() async {
@@ -91,27 +91,27 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
       // Format date to match Django's datetime-local format (YYYY-MM-DDTHH:MM)
       final formattedDate = selectedDate!.toIso8601String().substring(0, 16);
 
-      final ok = await service.createMatch(
+              final ok = await service.createMatch(
         title: titleC.text.trim(),
         category: selectedCategory!,
         location: locationC.text.trim(),
         maxMembers: int.parse(maxMembersC.text.trim()),
         eventDate: formattedDate,
         description: descriptionC.text.trim(),
-      );
+              );
 
-      if (!mounted) return;
+              if (!mounted) return;
 
-      if (ok) {
-        Navigator.pop(context, true);
+              if (ok) {
+                Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Match created successfully!")),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to create match")),
-        );
-      }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to create match")),
+                );
+              }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -327,8 +327,8 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                           ? "Select Date & Time *"
                           : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year} ${selectedDate!.hour.toString().padLeft(2, '0')}:${selectedDate!.minute.toString().padLeft(2, '0')}",
                       style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
+          ),
+        ],
                 ),
               ),
               const SizedBox(height: 16),

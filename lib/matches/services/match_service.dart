@@ -8,11 +8,11 @@ class MatchService {
   MatchService(this.request);
 
   /// ===== GET MATCHES =====
-Future<MatchResponse> fetchMatches({
+  Future<MatchResponse> fetchMatches({
   String keyword = "",
   String sport = "",
   String when = "",
-}) async {
+  }) async {
   try {
     final params = <String, String>{};
 
@@ -37,7 +37,7 @@ Future<MatchResponse> fetchMatches({
     if (response is String) {
       if (response.trim().startsWith('<!') || response.trim().startsWith('<!DOCTYPE')) {
         throw Exception('Server returned HTML error page instead of JSON.\n\nPlease check:\n1. Is the Django server running on http://127.0.0.1:8000?\n2. Does the endpoint /matches/json/ exist?\n3. Are you logged in?\n\nError response preview: ${response.substring(0, response.length > 300 ? 300 : response.length)}');
-      }
+  }
       // If it's a string but not HTML, try to decode it
       final decoded = json.decode(response) as Map<String, dynamic>;
       return MatchResponse.fromJson(decoded);
@@ -54,7 +54,7 @@ Future<MatchResponse> fetchMatches({
         e.toString().contains('<!DOCTYPE') ||
         e.toString().contains('Unexpected token')) {
       throw Exception('JSON parsing error - Server returned HTML instead of JSON.\n\nPlease check:\n1. Is the Django server running on http://127.0.0.1:8000?\n2. Does the endpoint /matches/json/ exist?\n3. Are you logged in?\n4. Verify the endpoint returns JSON, not HTML\n\nOriginal error: $e');
-    }
+  }
     rethrow;
   }
 }
@@ -71,7 +71,7 @@ Future<MatchResponse> fetchMatches({
   }) async {
     try {
       final response = await request.postJson(
-        "http://127.0.0.1:8000/matches/create/",
+      "http://127.0.0.1:8000/matches/create/",
         jsonEncode({
           "title": title,
           "category": category, // Category name (primary key of SportCategory)
@@ -80,7 +80,7 @@ Future<MatchResponse> fetchMatches({
           "event_date": eventDate, // Format: "YYYY-MM-DDTHH:MM"
           "description": description,
         }),
-      );
+    );
 
       if (response is Map<String, dynamic>) {
         return response["success"] == true;
