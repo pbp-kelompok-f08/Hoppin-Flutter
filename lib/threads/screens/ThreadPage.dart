@@ -879,21 +879,15 @@ class _ThreadCard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => PublicProfilePage(
-                    username: item.user.username,
-                  ),
+                  builder: (_) =>
+                      PublicProfilePage(username: item.user.username),
                 ),
               );
             },
             child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Tw.card2,
-              backgroundImage: item.user.profilePicture.isNotEmpty
-                  ? NetworkImage(item.user.profilePicture)
-                  : null,
-              child: item.user.profilePicture.isEmpty
-                  ? const Icon(Icons.person, color: Tw.muted)
-                  : null,
+              radius: 17,
+              backgroundColor: Colors.grey[800],
+              child: const Icon(Icons.person, size: 20, color: Colors.white),
             ),
           ),
 
@@ -907,24 +901,24 @@ class _ThreadCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PublicProfilePage(
-                                      username: item.user.username,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                "@${item.user.username}",
-                                style: const TextStyle(
-                                  color: Tw.text,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PublicProfilePage(
+                                username: item.user.username,
                               ),
                             ),
+                          );
+                        },
+                        child: Text(
+                          "@${item.user.username}",
+                          style: const TextStyle(
+                            color: Tw.text,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
                     Text(
                       created,
@@ -1289,21 +1283,15 @@ class _ReplyCard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => PublicProfilePage(
-                    username: item.user.username,
-                  ),
+                  builder: (_) =>
+                      PublicProfilePage(username: item.user.username),
                 ),
               );
             },
             child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Tw.card2,
-              backgroundImage: item.user.profilePicture.isNotEmpty
-                  ? NetworkImage(item.user.profilePicture)
-                  : null,
-              child: item.user.profilePicture.isEmpty
-                  ? const Icon(Icons.person, color: Tw.muted)
-                  : null,
+              radius: 17,
+              backgroundColor: Colors.grey[800],
+              child: const Icon(Icons.person, size: 20, color: Colors.white),
             ),
           ),
           const SizedBox(width: Tw.s3),
