@@ -419,7 +419,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
 
       if (mounted) {
         if (response['success'] == true) {
-          await request.logout("https://m-naufal41-hoppin.pbp.cs.ui.ac.id/auth/logout/");
+          await request.logout("https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/auth/logout/");
 
           if (!mounted) return;
 

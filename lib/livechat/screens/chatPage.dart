@@ -35,7 +35,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
     try {
       final response = await request.post(
-        'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/liveChat/chat/update/$chatId/',
+        'https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/liveChat/chat/update/$chatId/',
         jsonEncode({
           "_method": "PATCH",
           "message": newMessage,
@@ -60,7 +60,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
     try {
       await request.post(
-        'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/liveChat/chat/delete/$chatId/',
+        'https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/liveChat/chat/delete/$chatId/',
         jsonEncode({
           "_method": "DELETE",
         }),
@@ -97,7 +97,7 @@ class _ChatListPageState extends State<ChatListPage> {
   // ================= FETCH =================
   Future<List<Chat>> fetchChat(CookieRequest request) async {
     final response = await request.get(
-      'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/liveChat/chat/${widget.groupId}/',
+      'https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/liveChat/chat/${widget.groupId}/',
     );
 
     final datas = response["data"] as List;
@@ -156,7 +156,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
     try {
       final response = await request.post(
-        'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/liveChat/chat/${widget.groupId}/',
+        'https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/liveChat/chat/${widget.groupId}/',
         jsonEncode({
           "message": text,
           "replyTo": null,

@@ -52,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final request = context.read<CookieRequest>();
 
     try {
-      await request.logout("https://m-naufal41-hoppin.pbp.cs.ui.ac.id/auth/logout/");
+      await request.logout("https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/auth/logout/");
     } catch (_) {}
 
     if (!mounted) return;

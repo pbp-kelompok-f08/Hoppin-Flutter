@@ -107,7 +107,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
 
     try {
       final response = await request.post(
-        'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/booking-venue/book/${widget.venue.id}/',
+        'https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/booking-venue/book/${widget.venue.id}/',
         {
           'date': dateFormat.format(selectedDate!),
           'time': '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}',

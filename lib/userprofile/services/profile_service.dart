@@ -4,7 +4,7 @@ import 'package:flutter_hoppin/userprofile/models/user_profile.dart';
 import 'package:flutter_hoppin/userprofile/models/thread_model.dart';
 
 class ProfileService {
-  static const String baseUrl = 'https://m-naufal41-hoppin.pbp.cs.ui.ac.id';
+  static const String baseUrl = 'https://dion-wisdom-hoppin.pbp.cs.ui.ac.id';
 
   static Future<UserProfile> getOwnProfile(CookieRequest request) async {
     try {

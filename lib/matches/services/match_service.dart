@@ -21,7 +21,7 @@ class MatchService {
     if (when.isNotEmpty) params["when"] = when;
 
     final uri = Uri.https(
-      "m-naufal41-hoppin.pbp.cs.ui.ac.id",
+      "dion-wisdom-hoppin.pbp.cs.ui.ac.id",
       "/matches/json/",
       params,
     );
@@ -71,7 +71,7 @@ class MatchService {
   }) async {
     try {
       final response = await request.postJson(
-      "https://m-naufal41-hoppin.pbp.cs.ui.ac.id/matches/create/",
+      "https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/matches/create/",
         jsonEncode({
           "title": title,
           "category": category, // Category name (primary key of SportCategory)
@@ -94,7 +94,7 @@ class MatchService {
   /// ===== JOIN MATCH =====
   Future<bool> joinMatch(String matchId) async {
     final response =
-        await request.post("https://m-naufal41-hoppin.pbp.cs.ui.ac.id/matches/$matchId/book/", {});
+        await request.post("https://dion-wisdom-hoppin.pbp.cs.ui.ac.id/matches/$matchId/book/", {});
 
     if (response is Map<String, dynamic>) {
       return response["success"] == true;

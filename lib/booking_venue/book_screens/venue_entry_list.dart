@@ -29,7 +29,7 @@ class _VenueEntryListPageState extends State<VenueEntryListPage> {
       if (alphabet != null && alphabet.isNotEmpty && alphabet != "") {
         // Use filter endpoint when alphabet is specified and not empty
         final uri = Uri.https(
-          "m-naufal41-hoppin.pbp.cs.ui.ac.id",
+          "dion-wisdom-hoppin.pbp.cs.ui.ac.id",
           "/booking-venue/filter-venues-api/",
           {'alphabet': alphabet},
         );
@@ -46,7 +46,7 @@ class _VenueEntryListPageState extends State<VenueEntryListPage> {
       } else {
         // Use regular endpoint when no filter
         final uri = Uri.https(
-          "m-naufal41-hoppin.pbp.cs.ui.ac.id",
+          "dion-wisdom-hoppin.pbp.cs.ui.ac.id",
           "/booking-venue/show-venue-json/",
         );
         final response = await request.get(uri.toString());
