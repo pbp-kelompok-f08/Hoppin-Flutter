@@ -20,8 +20,8 @@ class MatchService {
     if (sport.isNotEmpty) params["sport"] = sport;
     if (when.isNotEmpty) params["when"] = when;
 
-    final uri = Uri.http(
-      "127.0.0.1:8000",
+    final uri = Uri.https(
+      "m-naufal41-hoppin.pbp.cs.ui.ac.id",
       "/matches/json/",
       params,
     );
@@ -36,7 +36,7 @@ class MatchService {
     // Check if response is a String (HTML/error) instead of Map (JSON)
     if (response is String) {
       if (response.trim().startsWith('<!') || response.trim().startsWith('<!DOCTYPE')) {
-        throw Exception('Server returned HTML error page instead of JSON.\n\nPlease check:\n1. Is the Django server running on http://127.0.0.1:8000?\n2. Does the endpoint /matches/json/ exist?\n3. Are you logged in?\n\nError response preview: ${response.substring(0, response.length > 300 ? 300 : response.length)}');
+        throw Exception('Server returned HTML error page instead of JSON.\n\nPlease check:\n1. Is the Django server running on https://m-naufal41-hoppin.pbp.cs.ui.ac.id?\n2. Does the endpoint /matches/json/ exist?\n3. Are you logged in?\n\nError response preview: ${response.substring(0, response.length > 300 ? 300 : response.length)}');
   }
       // If it's a string but not HTML, try to decode it
       final decoded = json.decode(response) as Map<String, dynamic>;
@@ -53,7 +53,7 @@ class MatchService {
     if (e.toString().contains('<!Doctype') || 
         e.toString().contains('<!DOCTYPE') ||
         e.toString().contains('Unexpected token')) {
-      throw Exception('JSON parsing error - Server returned HTML instead of JSON.\n\nPlease check:\n1. Is the Django server running on http://127.0.0.1:8000?\n2. Does the endpoint /matches/json/ exist?\n3. Are you logged in?\n4. Verify the endpoint returns JSON, not HTML\n\nOriginal error: $e');
+      throw Exception('JSON parsing error - Server returned HTML instead of JSON.\n\nPlease check:\n1. Is the Django server running on https://m-naufal41-hoppin.pbp.cs.ui.ac.id?\n2. Does the endpoint /matches/json/ exist?\n3. Are you logged in?\n4. Verify the endpoint returns JSON, not HTML\n\nOriginal error: $e');
   }
     rethrow;
   }
@@ -71,7 +71,7 @@ class MatchService {
   }) async {
     try {
       final response = await request.postJson(
-      "http://127.0.0.1:8000/matches/create/",
+      "https://m-naufal41-hoppin.pbp.cs.ui.ac.id/matches/create/",
         jsonEncode({
           "title": title,
           "category": category, // Category name (primary key of SportCategory)
@@ -94,7 +94,7 @@ class MatchService {
   /// ===== JOIN MATCH =====
   Future<bool> joinMatch(String matchId) async {
     final response =
-        await request.post("http://127.0.0.1:8000/matches/$matchId/book/", {});
+        await request.post("https://m-naufal41-hoppin.pbp.cs.ui.ac.id/matches/$matchId/book/", {});
 
     if (response is Map<String, dynamic>) {
       return response["success"] == true;

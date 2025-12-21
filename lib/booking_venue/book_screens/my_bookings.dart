@@ -26,7 +26,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     setState(() => isLoading = true);
     try {
       final request = context.read<CookieRequest>();
-      const url = 'http://127.0.0.1:8000/booking-venue/show-bookings-json/';
+      const url = 'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/booking-venue/show-bookings-json/';
       final response = await request.get(url);
       final bookModel = BookModel.fromJson(response);
       if (!mounted) return;
@@ -47,7 +47,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.post(
-        'http://127.0.0.1:8000/booking-venue/delete-booking/$bookingId/',
+        'https://m-naufal41-hoppin.pbp.cs.ui.ac.id/booking-venue/delete-booking/$bookingId/',
         {},
       );
 
