@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_hoppin/userprofile/models/user_profile.dart';
 import 'package:flutter_hoppin/userprofile/services/profile_service.dart';
 import 'package:flutter_hoppin/screens/login.dart';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart'; // kIsWeb
 
 class EditProfilePage extends StatefulWidget {
   final UserProfile profile;
@@ -19,6 +21,8 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  html.File? _pickedProfileImage;
+  bool _removeImage = false;
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _emailController;
   late TextEditingController _bioController;
@@ -77,13 +81,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (mounted) {
         if (response['success'] == true) {
+          // upload foto kalau ada
+          if (_pickedProfileImage != null) {
+            await ProfileService.uploadProfilePicture(
+              request,
+              _pickedProfileImage!,
+            );
+          }
+
+          // remove foto kalau ditandai
+          if (_removeImage) {
+            await ProfileService.removeProfilePicture(request);
+          }
+
+          if (!mounted) return;
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profile updated successfully!'),
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context, true); // Return true to trigger refresh
+
+          Navigator.pop(context, true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -116,6 +136,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
+  Future<void> _pickProfilePicture() async {
+    if (!kIsWeb) return;
+
+    final uploadInput = html.FileUploadInputElement();
+    uploadInput.accept = 'image/*';
+    uploadInput.click();
+
+    uploadInput.onChange.listen((event) {
+      final file = uploadInput.files?.first;
+      if (file == null) return;
+
+      setState(() {
+        _pickedProfileImage = file; // simpan DRAFT
+        _removeImage = false;       // batalin remove kalau ada
+      });
+    });
+  }
+
+  void _removeProfilePicture() {
+    setState(() {
+      _pickedProfileImage = null;
+      _removeImage = true;
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,6 +185,63 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Profile Picture
+              Center(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickProfilePicture,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 52,
+                            backgroundColor: Colors.grey[800],
+                            backgroundImage: _pickedProfileImage != null
+                                ? NetworkImage(
+                                    html.Url.createObjectUrl(_pickedProfileImage!),
+                                  )
+                                : (!_removeImage && widget.profile.profilePictureUrl != null
+                                    ? NetworkImage(
+                                        '${widget.profile.profilePictureUrl}?v=${DateTime.now().millisecondsSinceEpoch}',
+                                      )
+                                    : null),
+                            child: (_pickedProfileImage == null &&
+                                    (_removeImage || widget.profile.profilePictureUrl == null))
+                                ? const Icon(Icons.person, size: 50, color: Colors.white)
+                                : null,
+                          ),
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF9DB4C0),
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 18,
+                              color: Color(0xFF253237),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // tombol remove
+                    if (widget.profile.profilePictureUrl != null || _pickedProfileImage != null)
+                      TextButton(
+                        onPressed: _removeProfilePicture,
+                        child: const Text(
+                          'Remove photo',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
               // Username (disabled)
               _buildTextField(
                 label: 'Username',
