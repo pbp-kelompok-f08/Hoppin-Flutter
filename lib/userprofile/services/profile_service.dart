@@ -1,6 +1,4 @@
-import 'dart:convert'; 
-import 'dart:html' as html;
-import 'dart:async';
+import 'dart:convert';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:flutter_hoppin/userprofile/models/user_profile.dart';
 import 'package:flutter_hoppin/userprofile/models/thread_model.dart';
@@ -8,54 +6,20 @@ import 'package:flutter_hoppin/userprofile/models/thread_model.dart';
 class ProfileService {
   static const String baseUrl = 'http://localhost:8000';
 
-  // Get own profile
   static Future<UserProfile> getOwnProfile(CookieRequest request) async {
-    try {
-      final response = await request.get('$baseUrl/accounts/profile-detail/');
-      
-      // Check if response is a String (HTML/error) instead of Map (JSON)
-      if (response is String) {
-        if (response.trim().startsWith('<!') || response.trim().startsWith('<!DOCTYPE')) {
-          throw Exception('Server returned HTML error page instead of JSON.\n\nPlease check:\n1. Is the Django server running on $baseUrl?\n2. Are you logged in?\n3. Does the endpoint /accounts/profile-detail/ exist?\n\nError response preview: ${response.substring(0, response.length > 300 ? 300 : response.length)}');
-        }
-        // If it's a string but not HTML, try to decode it
-        final decoded = json.decode(response) as Map<String, dynamic>;
-        return UserProfile.fromJson(decoded);
-      }
-      
-      // Response should be a Map<String, dynamic>
-      return UserProfile.fromJson(response as Map<String, dynamic>);
-    } catch (e) {
-      if (e.toString().contains('<!Doctype') || 
-          e.toString().contains('<!DOCTYPE') ||
-          e.toString().contains('Unexpected token')) {
-        throw Exception('JSON parsing error - Server returned HTML instead of JSON.\n\nPlease check:\n1. Is the Django server running on $baseUrl?\n2. Are you logged in?\n3. Verify the endpoint returns JSON, not HTML\n\nOriginal error: $e');
-      }
-      throw Exception('Failed to load profile: $e');
-    }
+    final response = await request.get('$baseUrl/accounts/profile-detail/');
+    return UserProfile.fromJson(response);
   }
 
-  // Get public profile
   static Future<UserProfile> getPublicProfile(
     CookieRequest request,
     String username,
   ) async {
-    try {
-      final response = await request.get(
-        '$baseUrl/accounts/profile/$username/json/',
-      );
-      
-      if (response['success'] == true) {
-        return UserProfile.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'User not found');
-      }
-    } catch (e) {
-      throw Exception('Failed to load profile: $e');
-    }
+    final response =
+        await request.get('$baseUrl/accounts/profile/$username/json/');
+    return UserProfile.fromJson(response['data']);
   }
 
-  // Update profile
   static Future<Map<String, dynamic>> updateProfile(
     CookieRequest request, {
     required String email,
@@ -63,118 +27,48 @@ class ProfileService {
     String? favoriteSport,
     String? skillLevel,
   }) async {
-    try {
-      final response = await request.postJson(
-        '$baseUrl/accounts/profile/update-flutter/',
-        jsonEncode({  
-          'email': email,
-          'bio': bio,
-          'favorite_sport': favoriteSport ?? '',
-          'skill_level': skillLevel ?? '',
-        }),
-      );
-      return response;
-    } catch (e) {
-      throw Exception('Failed to update profile: $e');
-    }
+    return await request.postJson(
+      '$baseUrl/accounts/profile/update-flutter/',
+      jsonEncode({
+        'email': email,
+        'bio': bio,
+        'favorite_sport': favoriteSport ?? '',
+        'skill_level': skillLevel ?? '',
+      }),
+    );
   }
 
-  // Delete account
   static Future<Map<String, dynamic>> deleteAccount(
     CookieRequest request,
     String password,
   ) async {
-    try {
-      final response = await request.postJson(
-        '$baseUrl/accounts/delete-account/',
-        jsonEncode({'password': password}),  
-      );
-      return response;
-    } catch (e) {
-      throw Exception('Failed to delete account: $e');
-    }
+    return await request.postJson(
+      '$baseUrl/accounts/delete-account/',
+      jsonEncode({'password': password}),
+    );
   }
 
-  // Get user threads
   static Future<List<ThreadModel>> getUserThreads(
     CookieRequest request,
     String username,
   ) async {
     try {
-      final response = await request.get(
-        '$baseUrl/threads/json/user/$username/',
-      );
-      
-      // Check if response is a String (HTML/error) instead of List (JSON)
-      if (response is String) {
-        if (response.trim().startsWith('<!') || response.trim().startsWith('<!DOCTYPE')) {
-          // Endpoint might not exist, return empty list gracefully
-          return [];
-        }
-        // If it's a string but not HTML, try to decode it
-        final decoded = json.decode(response);
-        if (decoded is List) {
-          return decoded.map((json) => ThreadModel.fromJson(json as Map<String, dynamic>)).toList();
-        }
-        return [];
-      }
-      
-      if (response is List) {
-        return response.map((json) => ThreadModel.fromJson(json as Map<String, dynamic>)).toList();
-      }
-      return [];
-    } catch (e) {
-      // If endpoint doesn't exist, return empty list gracefully
-      if (e.toString().contains('<!Doctype') || 
-          e.toString().contains('<!DOCTYPE') ||
-          e.toString().contains('Unexpected token')) {
-        return [];
-      }
-      // For other errors, still return empty list to prevent UI crash
+      final response =
+          await request.get('$baseUrl/threads/json/user/$username/');
+      return (response as List)
+          .map((e) => ThreadModel.fromJson(e))
+          .toList();
+    } catch (_) {
       return [];
     }
-  }
-
-  static Future<Map<String, dynamic>> uploadProfilePicture(
-    CookieRequest request,
-    html.File file,
-  ) {
-    final completer = Completer<Map<String, dynamic>>();
-
-    final formData = html.FormData();
-    formData.appendBlob('profile_picture', file, file.name);
-
-    final xhr = html.HttpRequest();
-    xhr.open('POST', '$baseUrl/accounts/profile/upload-picture/');
-    xhr.withCredentials = true;
-
-    xhr.onLoad.listen((event) {
-      try {
-        final response = jsonDecode(xhr.responseText!);
-        completer.complete(response);
-      } catch (e) {
-        completer.completeError('Invalid JSON response');
-      }
-    });
-
-    xhr.onError.listen((event) {
-      completer.completeError('Upload failed');
-    });
-
-    xhr.send(formData);
-
-    return completer.future;
   }
 
   static Future<Map<String, dynamic>> removeProfilePicture(
     CookieRequest request,
   ) async {
-    final response = await request.post(
-      'http://localhost:8000/accounts/profile/remove-picture/',
+    return await request.post(
+      '$baseUrl/accounts/profile/remove-picture/',
       {},
     );
-
-    return response;
   }
-
 }
